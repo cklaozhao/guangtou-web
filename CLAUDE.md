@@ -36,7 +36,7 @@
 | 擦除 / 露底层环带 | `.logo::after` 的 mask 在 cursor 处 inner-r ~ outer-r 之间是 transparent，露出底层 |
 | 顶层小窗 / 线条小窗 | `--inner-r`（mask 中 cursor 0~inner-r 是 #000，露出顶层线条；默认 0 = 无小窗，头像稳定态 50 = 直径 100px，与字上 cursor-ring 一致） |
 | 底层环带外径 | `--outer-r`（mask 中 outer-r 处突变回 #000，圆外又是顶层；默认 1，hero 空白 100，头像稳定 maxR=对角线长） |
-| 头像进入 / 离开过渡 | `animateMask(targetInner, targetOuter, 800ms)` —— RAF 同时驱动 `--inner-r` 和 `--outer-r` 从当前值缓动到目标值（easeOutCubic）。进入：(0,100) → (50, maxR)；离开：(50, maxR) → (0, 100/1)。中途变向不停止，直接从当前位置反向追新目标 |
+| 头像进入 / 离开过渡 | `animateMask(targetInner, targetOuter, 800ms)` —— RAF 同时驱动 `--inner-r` 和 `--outer-r` 从当前值缓动到目标值（easeOutCubic）。**v2.0 起 `hero_blank` 也带小圆**，所以进入/离开头像时 inner-r 已经是 50，实际只 outer-r 在缓动。进入：(50,100) → (50, maxR)；离开（落 hero 空白）：(50, maxR) → (50, 100)；离开（落字上/出 hero）：(50, maxR) → (0, 1)。中途变向不停止，直接从当前位置反向追新目标 |
 | 光晕 | 已删除的 `.logo::before`（`mix-blend-mode: screen` 的高光层），不要重新加 |
 | 硬边 | mask gradient 同位置两个 stop（如 `transparent var(--inner-r), #000 var(--inner-r)`）= 零渐变带 |
 | 背景变化 | canvas 字符矩阵动画（`initGlitchCanvas` 的 `loop()`），始终运行，**不要再加暂停逻辑** |
@@ -49,10 +49,10 @@
 | 鼠标位置 | cursor-ring 类 / 尺寸 | --inner-r | --outer-r | 视觉 |
 |---|---|---|---|---|
 | 页面初始 / 鼠标在 hero 外 | 无 / 200px / inline `opacity: 0` 隐藏 | 0（CSS 默认） | 1（CSS 默认） | 顶层（线条头像）完整显示 |
-| hero 空白处 | 无 / 200px / 大圆环加自身 mask 在头像位置挖洞 | 0 | 100（cursorRingRadius）| 顶层 + 鼠标处 100px 半径硬边圆形擦除露底层 |
-| 进入头像（动画 800ms） | `.is-on-logo` / 40px / `visibility: hidden` | 0 → 50（缓动） | 当前 → maxR（缓动） | cursor 处线条小窗从 0 渐张到直径 100px + 底层环带从原位置扩散到 maxR，两者同时进行 |
+| hero 空白处（v2.0 起带嵌套小圆）| 无 / 200px / 大圆环加自身 mask 在头像位置挖洞 | **50** | 100（cursorRingRadius）| cursor 处一个直径 100px 顶层小圆 + 50~100r 底层环带 + 100+ 顶层。远离头像时 mask 在视野外，看不到嵌套结构；接近头像边缘时同时露顶层小圆与底层环带 |
+| 进入头像（动画 800ms） | `.is-on-logo` / 40px / `visibility: hidden` | 50（保持） | 100 → maxR（缓动） | 小圆已经在 hero 空白时存在，进入头像时 inner-r 不变，只 outer-r 扩散到对角线长 |
 | 头像稳定 | `.is-on-logo` / 40px / `visibility: hidden` | 50 | maxR（= `Math.hypot(rect.w, rect.h)`） | cursor 处直径 100px 顶层小窗 + 整张其他底层；同时 `.logo` `scale(1.06)` 放大 |
-| 离开头像（动画 800ms） | 取决于落点 | 50 → 0（缓动） | maxR → 100 或 1（缓动） | 小窗从直径 100px 缩回 0 + 底层环带从 maxR 收回到 100r 跟手圆（或 1px 无擦除态）。落点是 `hero 空白`→100；落点是字上 / 离开 hero→1 |
+| 离开头像（动画 800ms） | 取决于落点 | 50（保持，落字上/出 hero 时 → 0 缓动） | maxR → 100（落 hero 空白）或 → 1（落字上/出 hero）| 落 hero 空白：小圆保持，底层环带从 maxR 收回到 100r 跟手圆。落字上/出 hero：小圆和环带都缩到 0/1 |
 | 鼠标在标题 / footer 链接 | `.is-hidden` / 100px / 无 mask | 0 | 1 | 顶层完整显示，圆环 100px 反色叠加在文字上（200→100 由 cursor-ring 主规则的 width transition 0.2s 平滑过渡） |
 
 cursor-ring 的自身 mask（`--avatar-x/y/r`）在 `move()` 每帧更新，目的：当 200px 大圆环与头像重叠时，挖空头像部分 → 头像不被 difference 反色（仅在 hero 空白大圆环状态生效；`.is-hidden` / `.is-on-logo` 都通过 `mask-image: none` 关闭，且 `is-on-logo` 还加 `visibility: hidden` 整体不可见）。
@@ -80,9 +80,9 @@ cursor-ring 的自身 mask（`--avatar-x/y/r`）在 `move()` 每帧更新，目�
 直接浏览器打开 `guangtou.html`：
 
 1. 默认看到完整线条头像（顶层），背景字符滚动
-2. 鼠标在 hero 空白处移动 → 200px 反色圆环跟随，碰到头像边缘时硬边露底层
-3. 鼠标进头像 → 头像 `scale(1.06)` 放大；cursor 处线条小窗从 0 缓动到 100px 直径 + 底层环带同时从当前位置扩散到对角线长（约 800ms easeOutCubic 同步进行）；扩散完成后整张除小窗外都是底层
-4. 鼠标移出头像 → 小窗从 100px 缩回 0、底层环带从对角线长缩回到 100r（落 hero 空白时）或 1px（落字上 / 离开 hero 时），约 800ms 反向缓动
+2. 鼠标在 hero 空白处移动 → 200px 反色圆环跟随；接近头像边缘时同时呈现"直径 100px 顶层小圆 + 50~100r 底层环带"（v2.0 嵌套小圆视觉）
+3. 鼠标进头像 → 头像 `scale(1.06)` 放大；小圆**已经在那不再扩散**，只有底层环带从 100r 缓动扩散到对角线长（约 800ms easeOutCubic）；最终整张除小圆外都是底层
+4. 鼠标移出头像（落 hero 空白）→ 小圆保持直径 100px、底层环带从对角线长缩回到 100r（约 800ms 反向缓动）。落字上 / 出 hero 时小圆和环带都缩到 0/1（瞬切或缓动）
 5. 中途快进快出 → 当前动画立刻被取消，从当前值反向追新目标，整体丝滑无闪
 6. 鼠标到标题"光头obsidian教程" → 圆环平滑缩到 100px、标题下方 `::after` 下划线 `scaleX(0)→1` 填充展开
 7. 鼠标到底部备案号链接 → 系统 pointer 指针、圆环 100px、背景继续滚
