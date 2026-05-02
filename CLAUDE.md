@@ -6,10 +6,13 @@
 
 ## 文件清单
 
-- `guangtou.html` —— 唯一会编辑的产出文件，自包含（HTML + CSS + JS + 内嵌 base64 头像）。约 125KB，其中 ~109KB 是底层头像的 base64
-- `头像.jpg` —— 原始底层头像（1528×1526 雪山真人照），已经压缩到 480px / quality 82 后内嵌进 `guangtou.html`，保留原图作备份
+- `guangtou.html` —— 唯一会编辑的产出文件，自包含（HTML + CSS + JS）。约 22KB
 - `源码.html` —— 参考源码（小米 MiMo 复刻），**不直接修改**，仅作为 cursor-ring / glitch canvas 行为的对照
-- 远端 URL `https://photograph-1307041810.cos.ap-nanjing.myqcloud.com/202509041415597.jpg` —— 顶层线条头像，被 `.logo::after` 引用
+- `新人手册.html` —— 开发总结报告（给新人看，浏览器打开）
+- `README.md` —— 项目首页介绍
+- 头像图床（[cklaozhao.ccwu.cc](https://cklaozhao.ccwu.cc) 自家 CDN）：
+  - 顶层线条画：`https://cklaozhao.ccwu.cc/b761c6fb3efb55d296b37528570d2e34.jpg`，被 `.logo::after` 引用
+  - 底层真人照：`https://cklaozhao.ccwu.cc/c86282f5209ee3162ec92fb3daa6f035.jpg`，被 `.logo` 引用
 
 ## 用户协作偏好
 
