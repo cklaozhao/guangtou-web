@@ -36,7 +36,7 @@
 | 擦除 / 露底层环带 | `.logo::after` 的 mask 在 cursor 处 inner-r ~ outer-r 之间是 transparent，露出底层 |
 | 顶层小窗 / 线条小窗 | `--inner-r`（mask 中 cursor 0~inner-r 是 #000，露出顶层线条；默认 0 = 无小窗，头像稳定态 40） |
 | 底层环带外径 | `--outer-r`（mask 中 outer-r 处突变回 #000，圆外又是顶层；默认 1，hero 空白 100，头像稳定 maxR=对角线长） |
-| 进入头像扩散 | `animateOuterR()` —— RAF 驱动 `--outer-r` 从 100 缓动到 maxR（800ms easeOutCubic）；同时 `--inner-r` 瞬切 0→40 |
+| 头像进入 / 离开过渡 | `animateMask(targetInner, targetOuter, 800ms)` —— RAF 同时驱动 `--inner-r` 和 `--outer-r` 从当前值缓动到目标值（easeOutCubic）。进入：(0,100) → (40, maxR)；离开：(40, maxR) → (0, 100/1)。中途变向不停止，直接从当前位置反向追新目标 |
 | 光晕 | 已删除的 `.logo::before`（`mix-blend-mode: screen` 的高光层），不要重新加 |
 | 硬边 | mask gradient 同位置两个 stop（如 `transparent var(--inner-r), #000 var(--inner-r)`）= 零渐变带 |
 | 背景变化 | canvas 字符矩阵动画（`initGlitchCanvas` 的 `loop()`），始终运行，**不要再加暂停逻辑** |
@@ -44,14 +44,15 @@
 
 ## 交互状态机
 
-`updateInteractiveState`（`initCursor` 内）每次 mousemove 给 `.cursor-ring` 加状态类；`update`（`initLogoTilt` 内）联动写 `.logo` 的 `--reveal-x/y` + `--inner-r` + `--outer-r`，并通过 `animateOuterR` 驱动进入头像扩散过渡。
+`updateInteractiveState`（`initCursor` 内）每次 mousemove 给 `.cursor-ring` 加状态类；`update`（`initLogoTilt` 内）按当前鼠标命中区域算出 `targetState`（`on_logo` / `hero_blank` / `outside`），仅当状态变化时执行：进入或离开 `on_logo` 走 `animateMask` 800ms 缓动；`hero_blank` ↔ `outside` 之间瞬切。`--reveal-x/y` 每帧跟手。
 
 | 鼠标位置 | cursor-ring 类 / 尺寸 | --inner-r | --outer-r | 视觉 |
 |---|---|---|---|---|
 | 页面初始 / 鼠标在 hero 外 | 无 / 200px / inline `opacity: 0` 隐藏 | 0（CSS 默认） | 1（CSS 默认） | 顶层（线条头像）完整显示 |
 | hero 空白处 | 无 / 200px / 大圆环加自身 mask 在头像位置挖洞 | 0 | 100（cursorRingRadius）| 顶层 + 鼠标处 100px 半径硬边圆形擦除露底层 |
-| 进入头像（动画 800ms） | `.is-on-logo` / 40px / `visibility: hidden` | 40（瞬切） | 100 → maxR（RAF 缓动） | cursor 处 40px 顶层线条小窗即时出现 + 底层环带从 40~100 扩散到 40~maxR |
+| 进入头像（动画 800ms） | `.is-on-logo` / 40px / `visibility: hidden` | 0 → 40（缓动） | 当前 → maxR（缓动） | cursor 处线条小窗从 0 渐张到 40px + 底层环带从原位置扩散到 maxR，两者同时进行 |
 | 头像稳定 | `.is-on-logo` / 40px / `visibility: hidden` | 40 | maxR（= `Math.hypot(rect.w, rect.h)`） | cursor 处 40px 顶层小窗 + 整张其他底层；同时 `.logo` `scale(1.06)` 放大 |
+| 离开头像（动画 800ms） | 取决于落点 | 40 → 0（缓动） | maxR → 100 或 1（缓动） | 小窗从 40 缩回 0 + 底层环带从 maxR 收回到 100r 跟手圆（或 1px 无擦除态）。落点是 `hero 空白`→100；落点是字上 / 离开 hero→1 |
 | 鼠标在标题 / footer 链接 | `.is-hidden` / 40px / 无 mask | 0 | 1 | 顶层完整显示，圆环 40px 反色叠加在文字上（200→40 由 cursor-ring 主规则的 width transition 0.2s 平滑过渡） |
 
 cursor-ring 的自身 mask（`--avatar-x/y/r`）在 `move()` 每帧更新，目的：当 200px 大圆环与头像重叠时，挖空头像部分 → 头像不被 difference 反色（仅在 hero 空白大圆环状态生效；`.is-hidden` / `.is-on-logo` 都通过 `mask-image: none` 关闭，且 `is-on-logo` 还加 `visibility: hidden` 整体不可见）。
@@ -72,7 +73,7 @@ cursor-ring 的自身 mask（`--avatar-x/y/r`）在 `move()` 每帧更新，目�
 - `typeTitle()` —— 标题打字机效果（带随机抖动）
 - `initGlitchCanvas()` —— 背景字符矩阵；`mutate / draw / fadeColors` 在 `loop()` 里持续运行；不要再添加 `isFrozen` 之类的暂停状态
 - `initCursor()` —— cursor-ring 跟随、状态切换、自身 mask 更新（在 `move()` 内每帧调 `link.getBoundingClientRect()` 写 `--avatar-x/y/r`）
-- `initLogoTilt()` —— mask 状态机（`--inner-r` / `--outer-r`）+ 3D tilt + scale。`update()` 是状态机入口；`animateOuterR(target, ms, onDone)` 用 RAF 驱动 `--outer-r` 缓动（easeOutCubic），用于进入头像扩散过渡
+- `initLogoTilt()` —— mask 状态机（`--inner-r` / `--outer-r`）+ 3D tilt + scale。`update()` 是状态机入口（计算 `targetState`，仅状态变化时切换）；`animateMask(targetInner, targetOuter, ms)` 用 RAF 同时驱动两个变量缓动（easeOutCubic），覆盖进入和离开头像两种过渡；中途变向时取消旧动画从当前值反向追新目标
 
 ## 验证
 
@@ -80,7 +81,9 @@ cursor-ring 的自身 mask（`--avatar-x/y/r`）在 `move()` 每帧更新，目�
 
 1. 默认看到完整线条头像（顶层），背景字符滚动
 2. 鼠标在 hero 空白处移动 → 200px 反色圆环跟随，碰到头像边缘时硬边露底层
-3. 鼠标进头像 → 头像 `scale(1.06)` 放大；cursor 处**即时**出现 80px 直径顶层线条小窗 + 底层环带**同时**从 100r 扩散到对角线长（约 800ms）；扩散完成后整张除小窗外都是底层
-4. 鼠标到标题"光头obsidian教程" → 圆环平滑缩到 40px、标题下方 `::after` 下划线 `scaleX(0)→1` 填充展开
-5. 鼠标到底部备案号链接 → 系统 pointer 指针、圆环 40px、背景继续滚
-6. 鼠标移出窗口 → 圆环消失、小窗收起、头像回顶层
+3. 鼠标进头像 → 头像 `scale(1.06)` 放大；cursor 处线条小窗从 0 缓动到 80px 直径 + 底层环带同时从当前位置扩散到对角线长（约 800ms easeOutCubic 同步进行）；扩散完成后整张除小窗外都是底层
+4. 鼠标移出头像 → 小窗从 80px 缩回 0、底层环带从对角线长缩回到 100r（落 hero 空白时）或 1px（落字上 / 离开 hero 时），约 800ms 反向缓动
+5. 中途快进快出 → 当前动画立刻被取消，从当前值反向追新目标，整体丝滑无闪
+6. 鼠标到标题"光头obsidian教程" → 圆环平滑缩到 40px、标题下方 `::after` 下划线 `scaleX(0)→1` 填充展开
+7. 鼠标到底部备案号链接 → 系统 pointer 指针、圆环 40px、背景继续滚
+8. 鼠标移出窗口 → 圆环消失、小窗瞬切、头像回顶层（这种情况鼠标已经离开 viewport，过渡观察不到，所以做瞬切）

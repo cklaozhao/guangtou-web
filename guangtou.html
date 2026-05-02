@@ -693,14 +693,16 @@
       const hero = document.getElementById("hero");
       const cursorRingRadius = 100;
       const innerWindowR = 40;
-      const enterDurationMs = 800;
+      const transitionMs = 800;
       const interactiveSelector = "a, button, input, select, textarea";
 
-      let onLogoStable = false;
-      let enterAnim = null;
+      let lastTargetState = null;
+      let maskAnim = null;
+      let currentInnerR = 0;
       let currentOuterR = 1;
 
       function setInnerR(value) {
+        currentInnerR = value;
         logo.style.setProperty("--inner-r", `${value}px`);
       }
 
@@ -709,29 +711,31 @@
         logo.style.setProperty("--outer-r", `${value}px`);
       }
 
-      function cancelEnterAnim() {
-        if (enterAnim !== null) {
-          cancelAnimationFrame(enterAnim);
-          enterAnim = null;
+      function cancelMaskAnim() {
+        if (maskAnim !== null) {
+          cancelAnimationFrame(maskAnim);
+          maskAnim = null;
         }
       }
 
-      function animateOuterR(target, durationMs, onDone) {
-        cancelEnterAnim();
-        const start = currentOuterR;
+      function animateMask(targetInner, targetOuter, durationMs) {
+        cancelMaskAnim();
+        const startInner = currentInnerR;
+        const startOuter = currentOuterR;
         const startT = performance.now();
         const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
         function tick(now) {
           const t = Math.min(1, (now - startT) / durationMs);
-          setOuterR(start + (target - start) * easeOutCubic(t));
+          const e = easeOutCubic(t);
+          setInnerR(startInner + (targetInner - startInner) * e);
+          setOuterR(startOuter + (targetOuter - startOuter) * e);
           if (t < 1) {
-            enterAnim = requestAnimationFrame(tick);
+            maskAnim = requestAnimationFrame(tick);
           } else {
-            enterAnim = null;
-            if (onDone) onDone();
+            maskAnim = null;
           }
         }
-        enterAnim = requestAnimationFrame(tick);
+        maskAnim = requestAnimationFrame(tick);
       }
 
       function update(event) {
@@ -755,21 +759,34 @@
           event.clientX >= heroRect.left && event.clientX <= heroRect.right &&
           event.clientY >= heroRect.top && event.clientY <= heroRect.bottom;
 
-        if (onLogo) {
-          if (!onLogoStable && enterAnim === null) {
-            setInnerR(innerWindowR);
-            const maxR = Math.hypot(rect.width, rect.height);
-            animateOuterR(maxR, enterDurationMs, () => {
-              onLogoStable = true;
-            });
+        let targetState;
+        if (onLogo) targetState = "on_logo";
+        else if (onOtherInteractive || !inHero) targetState = "outside";
+        else targetState = "hero_blank";
+
+        if (targetState !== lastTargetState) {
+          let targetInner, targetOuter;
+          if (targetState === "on_logo") {
+            targetInner = innerWindowR;
+            targetOuter = Math.hypot(rect.width, rect.height);
+          } else if (targetState === "hero_blank") {
+            targetInner = 0;
+            targetOuter = cursorRingRadius;
+          } else {
+            targetInner = 0;
+            targetOuter = 1;
           }
-        } else {
-          if (onLogoStable || enterAnim !== null) {
-            cancelEnterAnim();
-            setInnerR(0);
-            onLogoStable = false;
+
+          const wasOnLogo = lastTargetState === "on_logo";
+          const willBeOnLogo = targetState === "on_logo";
+          if (wasOnLogo || willBeOnLogo) {
+            animateMask(targetInner, targetOuter, transitionMs);
+          } else {
+            cancelMaskAnim();
+            setInnerR(targetInner);
+            setOuterR(targetOuter);
           }
-          setOuterR((onOtherInteractive || !inHero) ? 1 : cursorRingRadius);
+          lastTargetState = targetState;
         }
 
         const cx = rect.width / 2;
@@ -787,10 +804,10 @@
 
       document.addEventListener("mousemove", update);
       document.addEventListener("mouseleave", () => {
-        cancelEnterAnim();
+        cancelMaskAnim();
         setInnerR(0);
-        onLogoStable = false;
         setOuterR(1);
+        lastTargetState = "outside";
         logo.style.transform = "translateZ(32px)";
       });
     }
