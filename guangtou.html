@@ -179,19 +179,40 @@
       background-size: cover;
       -webkit-mask-image: radial-gradient(
         circle at var(--reveal-x) var(--reveal-y),
-        #000 0,
-        #000 var(--inner-r),
-        transparent var(--inner-r),
+        transparent 0,
         transparent var(--outer-r),
         #000 var(--outer-r)
       );
       mask-image: radial-gradient(
         circle at var(--reveal-x) var(--reveal-y),
-        #000 0,
-        #000 var(--inner-r),
-        transparent var(--inner-r),
+        transparent 0,
         transparent var(--outer-r),
         #000 var(--outer-r)
+      );
+    }
+
+    .logo::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 3;
+      background-image: url("https://cklaozhao.ccwu.cc/b761c6fb3efb55d296b37528570d2e34.jpg");
+      background-position: center;
+      background-size: cover;
+      filter: invert(1);
+      -webkit-mask-image: radial-gradient(
+        circle at var(--reveal-x) var(--reveal-y),
+        #000 0,
+        #000 var(--inner-r),
+        transparent var(--inner-r)
+      );
+      mask-image: radial-gradient(
+        circle at var(--reveal-x) var(--reveal-y),
+        #000 0,
+        #000 var(--inner-r),
+        transparent var(--inner-r)
       );
     }
 
@@ -310,10 +331,11 @@
     }
 
     .cursor-ring.is-on-logo {
-      width: 100px;
-      height: 100px;
+      width: 40px;
+      height: 40px;
       -webkit-mask-image: none;
       mask-image: none;
+      visibility: hidden;
     }
 
     .footer {

@@ -33,11 +33,11 @@
 | 圆环 / 光标圆环 / 鼠标光圈 | `.cursor-ring` 元素 |
 | 颜色反转 / 反色 | `mix-blend-mode: difference` |
 | 遮罩 | CSS `mask-image` / `-webkit-mask-image` |
-| 擦除 / 露底层环带 | `.logo::after` 的 mask 在 cursor 处 inner-r ~ outer-r 之间是 transparent，露出底层 |
-| 顶层小窗 / 线条小窗 | `--inner-r`（mask 中 cursor 0~inner-r 是 #000，露出顶层线条；默认 0 = 无小窗，头像稳定态 50 = 直径 100px，与字上 cursor-ring 一致） |
+| 擦除 / 露底层环带 | `.logo::after` 的 mask 在 cursor 处 0 ~ outer-r 之间是 transparent，露出底层（v2.2 简化为 4-stop，不再管中央小圆）|
+| 中央反色线条画 / 反色小窗 | v2.2 起新增 `.logo::before`（同顶层线条画 URL + `filter: invert(1)`，z-index 3 在 `.logo::after` 之上），mask 限制为 cursor 0 ~ inner-r 圆。`--inner-r` 控制这个反色圆的半径（默认 0 = 无圆，hero 内 50 = 直径 100px）|
 | 底层环带外径 | `--outer-r`（mask 中 outer-r 处突变回 #000，圆外又是顶层；默认 1，hero 空白 100，头像稳定 maxR=对角线长） |
 | 头像进入 / 离开过渡 | `animateMask(targetInner, targetOuter, 800ms)` —— RAF 同时驱动 `--inner-r` 和 `--outer-r` 从当前值缓动到目标值（easeOutCubic）。**v2.0 起 `hero_blank` 也带小圆**，所以进入/离开头像时 inner-r 已经是 50，实际只 outer-r 在缓动。进入：(50,100) → (50, maxR)；离开（落 hero 空白）：(50, maxR) → (50, 100)；离开（落字上/出 hero）：(50, maxR) → (0, 1)。中途变向不停止，直接从当前位置反向追新目标 |
-| 光晕 | 已删除的 `.logo::before`（`mix-blend-mode: screen` 的高光层），不要重新加 |
+| 光晕 | 早期版本曾有 `.logo::before` 用 `mix-blend-mode: screen` 做高光，已删除，**不要重新加这种 screen 光晕**。v2.2 起 `.logo::before` 用作"反色线条画"层（不是光晕），用途完全不同 |
 | 硬边 | mask gradient 同位置两个 stop（如 `transparent var(--inner-r), #000 var(--inner-r)`）= 零渐变带 |
 | 背景变化 | canvas 字符矩阵动画（`initGlitchCanvas` 的 `loop()`），始终运行，**不要再加暂停逻辑** |
 | 备案区 | `.footer` 元素，`position: fixed; bottom: 0`，在 hero 之外 |
@@ -50,21 +50,21 @@
 |---|---|---|---|---|
 | 页面初始 / 鼠标在 hero 外 | 无 / 200px / inline `opacity: 0` 隐藏 | 0（CSS 默认） | 1（CSS 默认） | 顶层（线条头像）完整显示 |
 | hero 空白处（v2.0 起带嵌套小圆）| 无 / 200px / 大圆环加自身 mask 在头像位置挖洞 | **50** | 100（cursorRingRadius）| cursor 处一个直径 100px 顶层小圆 + 50~100r 底层环带 + 100+ 顶层。远离头像时 mask 在视野外，看不到嵌套结构；接近头像边缘时同时露顶层小圆与底层环带 |
-| 进入头像（动画 800ms） | `.is-on-logo` / 100px / 显示（difference 反色） | 50（保持） | 100 → maxR（缓动） | 小圆已经在 hero 空白时存在，进入头像时 inner-r 不变，只 outer-r 扩散到对角线长 |
-| 头像稳定 | `.is-on-logo` / 100px / 显示（difference 反色） | 50 | maxR（= `Math.hypot(rect.w, rect.h)`） | cursor 处看到 100px 反色小圆叠加在线条小窗上 = "反色的线条头像小圆"；外圈整张其他底层；`.logo` `scale(1.06)` 放大 |
+| 进入头像（动画 800ms） | `.is-on-logo` / 40px / `visibility: hidden` | 50（保持） | 100 → maxR（缓动） | 中央反色线条画小圆已经在 hero 空白时存在，进入头像时 inner-r 不变，只 outer-r 扩散到对角线长 |
+| 头像稳定 | `.is-on-logo` / 40px / `visibility: hidden` | 50 | maxR（= `Math.hypot(rect.w, rect.h)`） | 3 层视觉：中央 100px 反色线条画（`.logo::before`）+ 50r ~ maxR 整张底层（`.logo`，被 `.logo::after` mask 透出来）+ maxR+ 顶层（被遮在头像外，看不到）；`.logo` `scale(1.06)` 放大 |
 | 离开头像（动画 800ms） | 取决于落点 | 50（保持，落字上/出 hero 时 → 0 缓动） | maxR → 100（落 hero 空白）或 → 1（落字上/出 hero）| 落 hero 空白：小圆保持，底层环带从 maxR 收回到 100r 跟手圆。落字上/出 hero：小圆和环带都缩到 0/1 |
 | 鼠标在标题 / footer 链接 | `.is-hidden` / 100px / 无 mask | 0 | 1 | 顶层完整显示，圆环 100px 反色叠加在文字上（200→100 由 cursor-ring 主规则的 width transition 0.2s 平滑过渡） |
 
-cursor-ring 的自身 mask（`--avatar-x/y/r`）在 `move()` 每帧更新，目的：当 200px 大圆环与头像重叠时，挖空头像部分 → 头像不被 difference 反色（仅在 hero 空白大圆环状态生效；`.is-hidden` / `.is-on-logo` 都通过 `mask-image: none` 关闭，让 100px 圆完整显示在头像 / 文字上参与 difference 反色叠加）。
+cursor-ring 的自身 mask（`--avatar-x/y/r`）在 `move()` 每帧更新，目的：当 200px 大圆环与头像重叠时，挖空头像部分 → 头像不被 difference 反色（v2.2 起头像内反色由 `.logo::before` 内嵌实现，不再用 cursor-ring 反色覆盖，所以 `.is-on-logo` 又回到 `visibility: hidden`）。
 
 ## 关键 GOTCHA（踩过的坑）
 
 1. **不要让 `--outer-r ≤ --inner-r`**——会导致 mask 中 inner / outer stop 重叠或反序，stop 排序混乱视觉退化。用 `1px` 作为"无擦除"安全值；进入头像扩散动画 outer-r 必须始终 ≥ inner-r（实际从 100 起步、目标 maxR ≈ 250+，inner-r=50，安全）
-2. **直径 vs 半径**：`.cursor-ring` 的 CSS `width/height` 是**视觉直径**，但 mask radial-gradient 里 stop 位置是**半径**。让圆环和 mask 露出区视觉重合时 `width = 2 × outer-r`。早期曾因两边都设 50 出现"50px 圆环 + 100px mask 露出区"的双圈 BUG。v2.1 起头像内 `.is-on-logo` 也是 100px（与 inner-r=50 直径重合，刻意完美叠加做反色效果）
+2. **直径 vs 半径**：`.cursor-ring` 的 CSS `width/height` 是**视觉直径**，但 mask radial-gradient 里 stop 位置是**半径**。让圆环和 mask 露出区视觉重合时 `width = 2 × outer-r`。早期曾因两边都设 50 出现"50px 圆环 + 100px mask 露出区"的双圈 BUG。v2.2 起头像上 cursor-ring 又回到 `visibility: hidden`，反色由 `.logo::before` 内嵌做，不靠 cursor-ring 叠加
 3. **不要给 mask-image 加 transition**：`--reveal-x/y` 每帧都变，加 transition 会让圆洞肉眼可见地滞后于鼠标。头像进入扩散用 RAF 驱动 `--outer-r` 数值，绕开了这个限制
-4. **不要给 cursor-ring 加 mix-blend-mode 之外的渲染依赖**：source 的 `is-hidden` 原本写 `opacity: 0`，但 `hero.mouseenter` 里 inline `opacity: 1` 会覆盖；当前 `is-hidden` 已删除 `opacity: 0`，依赖 inline 控制（v2.1 后 `.is-on-logo` 也不再用 `visibility: hidden`，让 difference 反色叠加在线条小窗上）
+4. **不要给 cursor-ring 加 mix-blend-mode 之外的渲染依赖**：source 的 `is-hidden` 原本写 `opacity: 0`，但 `hero.mouseenter` 里 inline `opacity: 1` 会覆盖；当前 `is-hidden` 已删除 `opacity: 0`，依赖 inline 控制；`is-on-logo` 用 `visibility: hidden` 避开冲突
 5. **不要恢复"背景暂停"功能**：之前的 `isFrozen` / `setSceneFrozen` / `.is-time-stop` 逻辑全部已清理，glitch loop 始终运行
-6. **不要恢复 `.logo::before` 高光**：用户明确不要这个"光晕"
+6. **不要恢复 `.logo::before` 的"高光"用法**：早期版本 `.logo::before` 是 `mix-blend-mode: screen` 高光层（光晕），用户明确不要。v2.2 起 `.logo::before` 复用为"反色线条画"层（同顶层 URL + `filter: invert(1)` + mask 限制在中央 inner-r 圆），用途完全不同，**别按高光含义改它**
 7. **`.logo-link` hit-test 是矩形不是圆**——`border-radius: 50%` 只影响视觉。判定"在头像上"如果用 `under.closest(".logo-link")` 是按矩形；如果想按视觉圆形，用 `Math.hypot(localX-cx, localY-cy) <= rect.width/2`。当前代码两种都用：`onLogo` 用矩形（决定遮罩切换），tilt/scale 用圆形（决定 3D 倾斜）
 8. **`.is-inverted` 类与 `--reveal-size` 已淘汰**——历史方案下 `.logo.is-inverted::after` 是反向 mask，现在统一成单一参数化 mask（inner-r / outer-r），不再 toggle `.is-inverted`、不再写 `--reveal-size`；不要在 CSS 钩子或 JS 里再依赖这两个名字
 
@@ -80,9 +80,9 @@ cursor-ring 的自身 mask（`--avatar-x/y/r`）在 `move()` 每帧更新，目�
 直接浏览器打开 `guangtou.html`：
 
 1. 默认看到完整线条头像（顶层），背景字符滚动
-2. 鼠标在 hero 空白处移动 → 200px 反色圆环跟随；接近头像边缘时同时呈现"直径 100px 顶层小圆 + 50~100r 底层环带"（v2.0 嵌套小圆视觉）
-3. 鼠标进头像 → 头像 `scale(1.06)` 放大；小圆**已经在那不再扩散**，只有底层环带从 100r 缓动扩散到对角线长（约 800ms easeOutCubic）；最终整张除小圆外都是底层
-4. 鼠标移出头像（落 hero 空白）→ 小圆保持直径 100px、底层环带从对角线长缩回到 100r（约 800ms 反向缓动）。落字上 / 出 hero 时小圆和环带都缩到 0/1（瞬切或缓动）
+2. 鼠标在 hero 空白处移动 → 200px 反色圆环跟随；接近头像边缘时同心圆 3 层显形：**最外层原色线条画 + 中环底层真人照（50~100r）+ 中央反色线条画（直径 100px）**（v2.2 视觉模型）
+3. 鼠标进头像 → 头像 `scale(1.06)` 放大；中央反色线条画**已经在那不再扩散**，只有底层真人照环带从 100r 缓动扩散到对角线长（约 800ms easeOutCubic）；最终整张除中央反色圆外都是底层
+4. 鼠标移出头像（落 hero 空白）→ 中央反色圆保持直径 100px、底层环带从对角线长缩回到 100r（约 800ms 反向缓动）。落字上 / 出 hero 时反色圆和环带都缩到 0/1（瞬切或缓动）
 5. 中途快进快出 → 当前动画立刻被取消，从当前值反向追新目标，整体丝滑无闪
 6. 鼠标到标题"知识管理系统" → 圆环平滑缩到 100px、标题下方 `::after` 下划线 `scaleX(0)→1` 填充展开
 7. 鼠标到底部备案号链接 → 系统 pointer 指针、圆环 100px、背景继续滚
