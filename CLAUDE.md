@@ -4,12 +4,23 @@
 
 单文件 HTML 落地页，参照 `源码.html`（小米 MiMo 100T Hero 复刻版）改造而来，加入了头像 + 鼠标交互逻辑。整页是一个 hero section + 顶部头像 + 标题 + 底部备案号 footer，背景是 canvas 字符矩阵（glitch effect）。
 
-## 文件清单
+## 项目结构（多主题库）
 
-- `guangtou.html` —— 唯一会编辑的产出文件，自包含（HTML + CSS + JS）。约 22KB
-- `源码.html` —— 参考源码（小米 MiMo 复刻），**不直接修改**，仅作为 cursor-ring / glitch canvas 行为的对照
+每个主题独立一个文件夹，内含「源码 + 成品 + 配置速查」三件套。当前主题：
+
+- `xiaomi-MIMO/`
+  - `xiaomi-MIMO.html` —— 参考源码（小米 MiMo 100T Hero 复刻），**不直接修改**
+  - `guangtou-xiaomi-MIMO.html` —— 当前会编辑的产出文件，自包含（HTML + CSS + JS）。约 22KB
+  - `配置速查.md` —— 该主题的参数 / 交互速查
+
+根目录文件：
+
+- `README.md` —— 项目首页介绍 + 主题命名约定
+- `CLAUDE.md` —— 你正在读的这份
 - `新人手册.html` —— 开发总结报告（给新人看，浏览器打开）
-- `README.md` —— 项目首页介绍
+- `.gitignore` —— `docs/` 与 `assets/` 仅本地查看，不提交
+
+> ⚠️ 后文中提到 `guangtou.html` 时，对当前阶段而言指 `xiaomi-MIMO/guangtou-xiaomi-MIMO.html`；后续新增主题会有各自的产出文件路径。
 - 头像图床（[cklaozhao.ccwu.cc](https://cklaozhao.ccwu.cc) 自家 CDN）：
   - 顶层线条画：`https://cklaozhao.ccwu.cc/b761c6fb3efb55d296b37528570d2e34.jpg`，被 `.logo::after` 引用
   - 底层真人照：`https://cklaozhao.ccwu.cc/c86282f5209ee3162ec92fb3daa6f035.jpg`，被 `.logo` 引用

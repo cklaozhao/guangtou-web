@@ -1,0 +1,6 @@
+# 私有文件 —— 仅本地查看，不提交到 GitHub
+docs/
+assets/
+
+# macOS
+.DS_Store
