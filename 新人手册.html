@@ -1,0 +1,554 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<title>光头 Obsidian 教程落地页 · 开发总结 & 新人手册</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root {
+    --ink: #1a1a2a;
+    --ink-soft: #4a4a5a;
+    --ink-mute: #7a7a8a;
+    --cream: #f5f1e8;
+    --paper: #fbfaf6;
+    --line: #d8d4c8;
+    --line-soft: #e8e4d8;
+    --accent: #6b3aa0;
+    --accent-soft: #efe8f6;
+    --warning: #b8542e;
+    --warning-soft: #fbf3ee;
+    --code-bg: #efebe0;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, "Source Code Pro", monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Helvetica Neue", sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: var(--sans);
+    color: var(--ink);
+    background: var(--paper);
+    line-height: 1.75;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--accent-soft); transition: border-color 0.15s ease; }
+  a:hover { border-bottom-color: var(--accent); }
+
+  .hero {
+    background: var(--ink);
+    color: var(--cream);
+    padding: 80px 32px 64px;
+    border-bottom: 6px solid var(--accent);
+  }
+  .hero .wrap { max-width: 880px; margin: 0 auto; }
+  .hero .kicker {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: rgba(245, 241, 232, 0.55);
+    margin: 0 0 24px;
+  }
+  .hero h1 {
+    font-family: var(--mono);
+    font-size: clamp(28px, 5vw, 44px);
+    font-weight: 600;
+    margin: 0 0 8px;
+    line-height: 1.18;
+    letter-spacing: -0.5px;
+  }
+  .hero .subtitle {
+    display: block;
+    font-size: 0.65em;
+    color: rgba(245, 241, 232, 0.6);
+    margin-top: 8px;
+  }
+  .hero .lead {
+    margin: 28px 0 0;
+    max-width: 720px;
+    color: rgba(245, 241, 232, 0.92);
+    font-size: 17px;
+  }
+  .hero .lead strong { color: #fff; }
+  .hero .lead a { color: #c8b3e8; border-bottom-color: rgba(200, 179, 232, 0.4); }
+  .hero .lead a:hover { border-bottom-color: #c8b3e8; }
+
+  main { max-width: 880px; margin: 0 auto; padding: 56px 32px 96px; }
+
+  nav.toc {
+    background: var(--cream);
+    border-left: 4px solid var(--ink);
+    padding: 20px 28px;
+    margin-bottom: 64px;
+  }
+  nav.toc .toc-title {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-bottom: 8px;
+  }
+  nav.toc ol { margin: 4px 0 0; padding: 0 0 0 24px; }
+  nav.toc li { margin: 6px 0; }
+  nav.toc li::marker { color: var(--ink-mute); }
+  nav.toc a { color: var(--ink); border-bottom: 1px dashed var(--line); }
+  nav.toc a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+
+  section { margin: 80px 0 0; }
+  section + section { padding-top: 64px; border-top: 1px solid var(--line); }
+
+  h2 {
+    font-family: var(--mono);
+    font-size: 22px;
+    font-weight: 600;
+    margin: 0 0 28px;
+    color: var(--ink);
+    letter-spacing: -0.3px;
+  }
+  h2 .num { color: var(--accent); margin-right: 10px; }
+  h2 .star { color: var(--warning); margin-right: 6px; font-weight: 700; }
+
+  h3 {
+    font-size: 18px;
+    margin: 36px 0 12px;
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  p { margin: 14px 0; }
+  p.lead { font-size: 17px; color: var(--ink-soft); }
+
+  ul, ol { padding-left: 24px; }
+  ul li, ol li { margin: 6px 0; }
+
+  code {
+    font-family: var(--mono);
+    background: var(--code-bg);
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 0.88em;
+  }
+  pre {
+    font-family: var(--mono);
+    background: var(--code-bg);
+    padding: 16px 20px;
+    border-radius: 4px;
+    overflow-x: auto;
+    font-size: 13px;
+    line-height: 1.65;
+    margin: 18px 0;
+  }
+  pre code { background: none; padding: 0; font-size: inherit; }
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 18px 0;
+    font-size: 14px;
+  }
+  th, td {
+    border: 1px solid var(--line);
+    padding: 10px 14px;
+    text-align: left;
+    vertical-align: top;
+  }
+  th {
+    background: var(--cream);
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+  td code { background: rgba(255,255,255,0.6); border: 1px solid var(--line-soft); }
+
+  .tip {
+    background: var(--accent-soft);
+    border-left: 3px solid var(--accent);
+    padding: 14px 22px;
+    margin: 18px 0;
+    border-radius: 0 4px 4px 0;
+  }
+  .tip strong:first-child { color: var(--accent); }
+
+  .gotcha {
+    background: var(--warning-soft);
+    border-left: 3px solid var(--warning);
+    padding: 14px 22px;
+    margin: 18px 0;
+    border-radius: 0 4px 4px 0;
+  }
+  .gotcha strong:first-child { color: var(--warning); }
+
+  .quote {
+    font-style: italic;
+    color: var(--ink-soft);
+    border-left: 2px solid var(--line);
+    padding: 4px 0 4px 18px;
+    margin: 14px 0;
+  }
+
+  ol.lesson {
+    counter-reset: step;
+    padding: 0;
+    list-style: none;
+    margin: 24px 0;
+  }
+  ol.lesson > li {
+    counter-increment: step;
+    padding: 22px 0 22px 64px;
+    position: relative;
+    border-top: 1px solid var(--line-soft);
+  }
+  ol.lesson > li:first-child { border-top: none; padding-top: 4px; }
+  ol.lesson > li:first-child::before { top: 4px; }
+  ol.lesson > li::before {
+    content: counter(step, decimal-leading-zero);
+    position: absolute;
+    left: 0;
+    top: 22px;
+    font-family: var(--mono);
+    font-size: 26px;
+    color: var(--accent);
+    line-height: 1;
+    font-weight: 600;
+  }
+  ol.lesson > li > strong:first-child {
+    display: block;
+    font-size: 17px;
+    margin-bottom: 6px;
+    color: var(--ink);
+  }
+  ol.lesson > li > p { margin: 8px 0; }
+
+  ol.timeline {
+    list-style: none;
+    padding: 0;
+    margin: 18px 0;
+  }
+  ol.timeline > li {
+    padding: 16px 20px;
+    background: var(--cream);
+    margin-bottom: 10px;
+    border-left: 3px solid var(--ink);
+    border-radius: 0 4px 4px 0;
+  }
+  ol.timeline > li.user-commit { border-left-color: var(--warning); }
+  ol.timeline > li > strong:first-child { font-family: var(--mono); font-size: 14px; }
+  ol.timeline > li code { background: rgba(255,255,255,0.6); }
+  ol.timeline > li > div { margin-top: 6px; font-size: 14px; color: var(--ink-soft); }
+
+  hr { border: none; border-top: 1px solid var(--line); margin: 32px 0; }
+
+  footer {
+    background: var(--ink);
+    color: rgba(245, 241, 232, 0.65);
+    padding: 36px 32px;
+    text-align: center;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 1.5px;
+  }
+  footer a { color: rgba(245, 241, 232, 0.85); border-bottom-color: rgba(245, 241, 232, 0.3); }
+
+  @media (max-width: 600px) {
+    .hero { padding: 56px 22px 40px; }
+    main { padding: 40px 22px 64px; }
+    h2 { font-size: 19px; }
+    table { font-size: 13px; }
+    th, td { padding: 8px 10px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="kicker">handover · 最后更新 2026-05-01</p>
+    <h1>光头 Obsidian 教程落地页<span class="subtitle">开发总结 &amp; 新人手册</span></h1>
+    <p class="lead">这份文档记录了一个看起来"只是个头像 + 标题"的落地页是怎么走过 6 次迭代、踩了哪些坑的；更重要的是——把<strong>"当你不知道一个东西叫什么、也不知道该怎么描述时"</strong>应该怎么和 AI / 团队对话总结成可复用的方法。</p>
+    <p class="lead">如果你只有 5 分钟，请直接跳到 <a href="#how-to-describe">第 4 节</a>。</p>
+  </div>
+</header>
+
+<main>
+
+<nav class="toc" aria-label="目录">
+  <div class="toc-title">contents</div>
+  <ol>
+    <li><a href="#overview">01 · 项目速览</a></li>
+    <li><a href="#timeline">02 · 开发时间线（6 次迭代）</a></li>
+    <li><a href="#stories">03 · 典型绕路案例</a></li>
+    <li><a href="#how-to-describe"><strong>★ 04 · 不知道一个东西叫什么时怎么办</strong></a></li>
+    <li><a href="#glossary">05 · 中英术语速查表</a></li>
+    <li><a href="#workflow">06 · 推荐工作流</a></li>
+    <li><a href="#checklist">07 · 第一天上手 checklist</a></li>
+  </ol>
+</nav>
+
+<section id="overview">
+<h2><span class="num">01</span>项目速览</h2>
+
+<p>这是一个<strong>单文件 HTML 落地页</strong>，作为「光头 Obsidian 教程」飞书 wiki 的入口页。整页只有一屏 hero section + 底部备案条，但视觉/交互上做了不少事：</p>
+<ul>
+  <li>背景：canvas 字符矩阵滚动（"glitch" 风格）</li>
+  <li>头像：双层 —— 顶层是远端线条画，底层是真人照，鼠标进出时切换显示</li>
+  <li>cursor-ring：自定义鼠标光圈，跟随 + <code>mix-blend-mode: difference</code>（颜色反色）</li>
+  <li>标题：打字机动画 + hover 下划线展开</li>
+</ul>
+
+<table>
+<thead><tr><th>文件</th><th>说明</th></tr></thead>
+<tbody>
+<tr><td><code>guangtou.html</code></td><td>唯一会编辑的产出文件。约 125KB，HTML + CSS + JS + 内嵌 base64 真人照都在一个文件里</td></tr>
+<tr><td><code>头像.jpg</code></td><td>真人照原图（1528×1526），已被压缩 + base64 嵌入 html，原图作备份</td></tr>
+<tr><td><code>源码.html</code></td><td>参考源码（小米 MiMo 100T Hero 复刻）。<strong>不要直接改它</strong>，仅作为 cursor-ring / glitch canvas 的对照</td></tr>
+<tr><td><code>CLAUDE.md</code></td><td>项目协作约定 + 术语对齐表 + 状态机表 + GOTCHA 列表。<strong>每次开始工作前先读它</strong></td></tr>
+<tr><td>远端 URL</td><td>顶层线条头像图（在 cos 图床），被 <code>.logo::after</code> 引用。换头像要去 cos 改</td></tr>
+</tbody>
+</table>
+
+<p>仓库：<code>github.com/cklaozhao/guangtou-web</code></p>
+</section>
+
+
+<section id="timeline">
+<h2><span class="num">02</span>开发时间线（6 次迭代）</h2>
+
+<p>每次都是一个目标明确的小迭代，分支命名 <code>logo-N</code>，做完 fast-forward merge 回 main 再开下一个。看这条时间线能很快感受到这个项目的"绕路"在哪。</p>
+
+<ol class="timeline">
+  <li>
+    <strong>init</strong> · <code>82c4817</code>
+    <div>项目初始化备份。已包含基础视觉（hero / 头像双层 / 字符矩阵 / cursor-ring 跟随 + difference）</div>
+  </li>
+  <li>
+    <strong>logo-1</strong> · <code>b4d54f9</code> · 头像上的"双圈"问题
+    <div>用户发现鼠标在头像上时同时出现两个圆形：内圈 40px 反色 disc + 外圈 80px 线条揭示。决定保留外圈、隐藏内圈。改动：<code>.cursor-ring.is-on-logo</code> 加 <code>visibility: hidden</code>（1 行）</div>
+  </li>
+  <li>
+    <strong>logo-2 v1</strong> · <code>ea9b5a3</code> · 进入头像加渐进过渡（割裂版）
+    <div>原本鼠标进头像时底层瞬间显示，希望加扩散过渡。第一版用 RAF 驱动 reveal-size 从 100→maxR (350ms)，<em>结束后</em>才切 inverted mask 露出小窗 —— 但用户说"先扩散→才出现小窗"是割裂的</div>
+  </li>
+  <li>
+    <strong>logo-2 v2</strong> · <code>a955cbc</code> · 单一参数化 mask
+    <div>把"默认 mask + .is-inverted 反向 mask"两套合并成<strong>一套带 5-stop 的 radial-gradient</strong>。inner-r 控制小窗、outer-r 控制底层环带外径。进入头像 inner-r 瞬切 0→40，outer-r 同时缓动 100→maxR——扩散和小窗同时进行</div>
+  </li>
+  <li>
+    <strong>logo-3</strong> · <code>fa9d309</code> · 减速 + 字上光圈尺寸
+    <div>用户反馈 350ms 扩散仍太快"人眼跟不上"，调到 800ms。同时 <code>.cursor-ring.is-hidden</code> 从 16px 改 40px</div>
+  </li>
+  <li class="user-commit">
+    <strong>e45a2da</strong> · 修复文字反转圆圈大小（用户手动）
+    <div>用户验证 logo-3 后觉得字上 40px 还是不够大，<strong>自己直接编辑 1 个数字</strong>把 <code>.cursor-ring.is-hidden</code> 改成 100px 并 commit。这恰好印证了项目的"模块化设计哲学"——感官参数集中成单个常量后，用户自己也能改</div>
+  </li>
+</ol>
+</section>
+
+
+<section id="stories">
+<h2><span class="num">03</span>典型绕路案例</h2>
+
+<p class="lead">挑 3 个最有代表性的"绕路"，让你感受为什么这些工作量看起来超出"小调整"的预期。</p>
+
+<h3>案例 A · 同一个词「反转」指两件事</h3>
+<p>用户说"我要保留<strong>非反转</strong>的那个"。乍看意图明确，但代码里存在两个独立的"反转"语义：</p>
+<ol>
+  <li><strong>颜色反转</strong> = <code>mix-blend-mode: difference</code>（cursor-ring 用了它，所以鼠标圆圈是反色的）</li>
+  <li><strong>遮罩反转</strong> = 当时的 <code>.logo.is-inverted::after</code> 这套类（mask radial-gradient 的方向反向）</li>
+</ol>
+<p>用户视觉上看到的"两个圆环"，其实分别对应这两件事：内圈是颜色反转的 disc，外圈是遮罩反转产生的揭示区。当用户说"非反转"，TA 指的是<em>没有用 mix-blend-mode 处理的那一个</em>——但 AI 单凭文字两种解释都成立。</p>
+<div class="tip"><strong>教训：</strong>同一个中文词在代码里指多个独立概念时，必须主动建立术语表。我们用 <code>CLAUDE.md</code> 的"中英术语对齐"段沉淀这个对齐 —— 一旦写下"用户说 X = 代码里 Y"，下次会议就不再有歧义。</div>
+
+<h3>案例 B · 串行动画的"卡顿感"</h3>
+<p>logo-2 v1 实现了：先扩散 350ms，扩散完才切 inverted mask 露出小窗。从代码看是两阶段顺承，从用户视角看是<strong>"前面在扩散→突然多了个小窗"两件事先后发生</strong>。用户反馈"非常割裂"。</p>
+<p>真正的解法不是调时长，而是把<strong>视觉模型</strong>改了：原来 mask 是"单半径圆"在两套规则间切换，现在 mask 是"双半径环带"在一套公式里参数化。两个动画变量（inner-r 瞬切 + outer-r 缓动）在同一帧里联动 —— 时间上不再是串行而是同步。</p>
+<div class="tip"><strong>教训：</strong>如果用户说"割裂 / 卡 / 不连贯"，不要去调动画曲线，要回头看视觉模型是否本身有"两件不同的事在切换"。能用一套参数化模型表达的视觉，就别用"两套规则切换"做。</div>
+
+<h3>案例 C · "感官参数"的 AI 默认值经常偏小</h3>
+<p>同一种"开发觉得刚好、用户觉得不够"的偏差，在这个项目里出现了至少 3 次：</p>
+<table>
+<thead><tr><th>参数</th><th>AI 初次给值</th><th>用户调整到</th><th>差异</th></tr></thead>
+<tbody>
+<tr><td>扩散动画时长</td><td>350ms</td><td>800ms</td><td>2.3×</td></tr>
+<tr><td>字上 cursor-ring 尺寸</td><td>40px（logo-3 改）</td><td>100px（用户手动）</td><td>2.5×</td></tr>
+<tr><td>扩散动画时长（如果当初按 industry 中位）</td><td>500ms</td><td>800ms</td><td>1.6×</td></tr>
+</tbody>
+</table>
+<p>开发自己写动画时大多落在 200-400ms（"功能反馈"区间），但展示性 / 教学性的动画用户希望<strong>看清过程</strong>，落在 600-1000ms。尺寸也类似 —— 开发觉得 "够用就行"，用户更看重 "存在感 / 视觉重量"。</p>
+<div class="tip"><strong>教训：</strong>感官参数（时长 / 尺寸 / 不透明度 / 间距）AI 的"建议值"和用户期望经常 differ，<strong>提前告诉用户这是个易调常量</strong>（"如果觉得不合适只改这一个数字"），让用户可以低成本自己调而不是等下一轮迭代。</div>
+</section>
+
+
+<section id="how-to-describe">
+<h2><span class="star">★</span><span class="num">04</span>不知道一个东西叫什么时怎么办</h2>
+
+<p class="lead">这一节是这份手册的核心。下面 10 条全是我们在这个项目里实际验证过的方法 —— 它们让"用户用大白话提需求 → AI 写出对的代码"这条路尽量短。</p>
+
+<ol class="lesson">
+
+  <li>
+    <strong>用「行为 + 位置 + 时间」描述，不要追求精确名词</strong>
+    <p>不会说 "radial-gradient mask" 没关系。描述<strong>鼠标周围有一圈，圈内的颜色和外面是反的，鼠标到哪它跟到哪</strong>——AI 会还原成正确的技术词。</p>
+    <div class="quote">实例："让鼠标移到头像上时，原来的真人照不要瞬间出现，要从我鼠标位置开始一圈一圈扩散过来。" —— 这一句完全没有用任何 CSS / mask 术语，但足够清晰，logo-2 v2 的整套方案就是从这一句长出来的。</div>
+  </li>
+
+  <li>
+    <strong>用「对比」描述变化，不要直接给数字</strong>
+    <p>不要："改成 800ms"。要："现在太快了我人眼跟不上，慢一点，能让我看清扩散过程就行。" AI 会给一个建议值 + 解释 trade-off，你拍板。</p>
+    <p>除非你已经精确知道自己要什么（"颜色 #f5f1e8" / "font-size 18px"），否则给目标体感比给数字有效得多 —— 因为<strong>感官值的 AI 默认普遍偏小</strong>（见上文案例 C）。</p>
+  </li>
+
+  <li>
+    <strong>把效果拆成「状态」</strong>
+    <p>视觉效果 99% 是状态机。鼠标在 X 处时是 A 样，移到 Y 处时是 B 样，离开时是 C 样。直接拿"状态 → 视觉"的列表交给 AI：</p>
+<pre><code>鼠标在 hero 空白处 → 跟随圆圈，碰头像边缘有硬边
+鼠标在头像上     → 头像变底层，鼠标处一个小窗露线条
+鼠标在标题上     → 圆圈缩小，颜色还是反的</code></pre>
+    <p>项目 <code>CLAUDE.md</code> 的"交互状态机"就是这种风格。表格写出来后，bug 通常是表格里某一格不对，定位很快。</p>
+  </li>
+
+  <li>
+    <strong>描述时间顺序，标记「卡顿点」</strong>
+    <p>当感觉"哪里不对"时，把时间序列写清楚，标记不对的那一帧。例：<em>"先 A → 然后 B → 我觉得 B 出现得太突然，应该和 A 一起进行"</em>。</p>
+    <p>项目里"扩散和小窗割裂"的反馈就是这个模式 —— 用户没用任何技术词，只说"先后"和"卡"，足够让 AI 重做模型。</p>
+  </li>
+
+  <li>
+    <strong>让 AI 起名字 + 维护术语表</strong>
+    <p>遇到"我说不上来"的东西时，描述完后加一句"<strong>这个东西在代码里叫什么？以后我用什么名字好</strong>"。让 AI 把对齐结果写进 <code>CLAUDE.md</code>。</p>
+    <p>这份术语表是<em>每次新对话 AI 都会先读</em>的，相当于和未来的自己 / 同事 / 别的 AI 提前对齐。下次说"圆环"就不再歧义。</p>
+  </li>
+
+  <li>
+    <strong>用熟悉世界打比方</strong>
+    <p>"像水墨晕开"、"像快门一闪"、"像窗帘拉开"、"像探照灯扫过" —— 非技术比喻能精准传递物理感。</p>
+    <p>AI 会把比喻反编码成 easing 曲线 / 透明度 / 几何图形。<strong>比方比形容词（"自然一点"、"流畅一点"）有用得多</strong>。</p>
+  </li>
+
+  <li>
+    <strong>说不上来时直接说「不知道」</strong>
+    <p>"我想要 X 体验，但不知道用什么实现，给我 2-3 个方案，告诉我各自的代价" —— 这一句能直接把决策权切回 AI，避免用错术语指错方向。</p>
+    <p>AI 给的方案如果都不像，再具体说哪不像（"方案 1 那个圆从中间开始，但我希望从我鼠标已经画过的位置开始"），不要 just 说"不对"。</p>
+  </li>
+
+  <li>
+    <strong>大改动先方案后动手</strong>
+    <p>需求一句话讲完，让 AI 出方案 + 状态表 + 改哪些文件。你看完再点头让动手。</p>
+    <p>选择标准：<strong>会不会改超过 1 个地方</strong>。会改多处的、动到状态机的、动到视觉模型的，必须先方案。单一数字 / 颜色 / 类名直接改。</p>
+  </li>
+
+  <li>
+    <strong>一次只改一件事</strong>
+    <p>不要："想加个 X + 改颜色 + 加按钮 + 让 Y 变快。" 每次只描述一个目标，验证完再开下一个。</p>
+    <p>多任务一起提的副作用：(1) 方案变得很大没法 review，(2) 调错了一个不知道是哪个，(3) commit 难拆，回滚困难。</p>
+  </li>
+
+  <li>
+    <strong>每次实施完，浏览器跑一遍</strong>
+    <p>类型检查 / 测试通过 ≠ 视觉对。HTML/CSS/JS 改动一定要打开浏览器把所有相关状态都跑一遍（这个项目的 6 个状态见 <code>CLAUDE.md</code> 的"验证"段）。</p>
+    <p>项目约定<strong>每次实施完都要 commit + push</strong> —— 这样部署和浏览器测试可以同时进行，工作不会丢。</p>
+  </li>
+
+</ol>
+
+<h3>速查：提示词模板</h3>
+<p>当你想新加一个视觉/交互需求时，可以直接套这个模板（无脑填空）：</p>
+<pre><code>【现状】当前 [位置/状态] 的表现是 [描述视觉]。
+【目标】我希望它变成 [描述视觉]。
+【感受】我现在觉得 [太快/太慢/不连贯/突兀/不够明显/...]，
+       希望 [更自然/更慢/更同步/更明显/...]。
+【约束】保持 [其他状态/其他元素] 不变。
+【请你做的】先给我方案 + 改哪些文件，等我点头再动手。</code></pre>
+
+<div class="tip"><strong>提示：</strong>这个项目的所有"先方案后动手"协作都是这种格式 —— 用户经常省略其中几格（比如"约束"很常省），AI 会自己回头问。所以即使填不全也无妨。</div>
+</section>
+
+
+<section id="glossary">
+<h2><span class="num">05</span>中英术语速查表</h2>
+
+<h3>本项目特有词</h3>
+<table>
+<thead><tr><th>用户/中文俗称</th><th>代码里对应</th><th>说明</th></tr></thead>
+<tbody>
+<tr><td>顶层头像 / 线条头像</td><td><code>.logo::after</code> 的 background</td><td>远端 URL 的线条画</td></tr>
+<tr><td>底层头像 / 真人照</td><td><code>.logo</code> 的 background</td><td>内嵌 base64 的雪山照</td></tr>
+<tr><td>圆环 / 光圈 / 鼠标圆环</td><td><code>.cursor-ring</code> 元素</td><td>跟随鼠标的反色圆</td></tr>
+<tr><td>颜色反转 / 反色</td><td><code>mix-blend-mode: difference</code></td><td>cursor-ring 用它做颜色对调</td></tr>
+<tr><td>遮罩</td><td>CSS <code>mask-image</code></td><td>用 radial-gradient 来"挖洞"</td></tr>
+<tr><td>顶层小窗 / 线条小窗</td><td><code>--inner-r</code> 控制半径</td><td>头像稳定态 cursor 处的 40r 顶层圆</td></tr>
+<tr><td>底层环带外径</td><td><code>--outer-r</code> 控制半径</td><td>底层"露真人照"环带的外圈</td></tr>
+<tr><td>扩散 / 渐进显示</td><td><code>animateOuterR()</code></td><td>RAF 驱动 outer-r 缓动到 maxR</td></tr>
+<tr><td>硬边</td><td>同位置两个 stop（如 <code>transparent var(--inner-r), #000 var(--inner-r)</code>）</td><td>零渐变带 = 清晰边缘</td></tr>
+<tr><td>背景字符雨 / glitch</td><td>canvas 里的 <code>initGlitchCanvas()</code></td><td>持续运行不要停</td></tr>
+<tr><td>备案区 / footer</td><td><code>.footer</code> 元素</td><td>fixed 在底部</td></tr>
+</tbody>
+</table>
+
+<h3>常见前端动作词（你不知道叫什么时可以来这查）</h3>
+<table>
+<thead><tr><th>中文俗称</th><th>英文 / API</th><th>典型用法</th></tr></thead>
+<tbody>
+<tr><td>过渡</td><td>transition</td><td>CSS 状态变化时的平滑插值（width / color / transform 等）</td></tr>
+<tr><td>动画</td><td>animation / @keyframes</td><td>CSS 多帧动画或 JS RAF 驱动的连续变化</td></tr>
+<tr><td>缓动 / 节奏</td><td>easing / cubic-bezier</td><td>"开头快结尾慢" → ease-out；"开头慢结尾快" → ease-in</td></tr>
+<tr><td>跟随鼠标</td><td>follow / mousemove</td><td>元素 left/top 跟踪 event.clientX/Y</td></tr>
+<tr><td>悬停</td><td>hover</td><td>CSS <code>:hover</code> 或 mouseenter / mouseleave</td></tr>
+<tr><td>命中测试</td><td>hit test / elementFromPoint</td><td>判定鼠标命中哪个元素（注意 <code>border-radius</code> 不影响命中区）</td></tr>
+<tr><td>反色 / 混合</td><td>mix-blend-mode / blend mode</td><td>multiply / difference / screen 等</td></tr>
+<tr><td>遮罩 / 蒙版</td><td>mask-image / clip-path</td><td>限制元素显示的形状</td></tr>
+<tr><td>层级</td><td>z-index / stacking context</td><td>谁压谁。注意 transform / opacity / filter 会创建新栈</td></tr>
+<tr><td>变换</td><td>transform: scale/rotate/translate</td><td>不触发布局重排，性能好</td></tr>
+<tr><td>径向渐变</td><td>radial-gradient</td><td>圆形/椭圆色彩过渡，常用于光晕 / 聚焦 / mask</td></tr>
+<tr><td>视口单位</td><td>vw / vh / dvh / svh</td><td>响应式尺寸；dvh / svh 解决移动端浏览器栏问题</td></tr>
+<tr><td>RAF / 每帧</td><td>requestAnimationFrame</td><td>每帧（约 16ms）执行回调，JS 驱动连续动画</td></tr>
+<tr><td>防抖 / 节流</td><td>debounce / throttle</td><td>限制高频事件执行频率</td></tr>
+<tr><td>渐入 / 渐出</td><td>fade in / fade out</td><td>opacity 0 ↔ 1</td></tr>
+<tr><td>滑入 / 滑出</td><td>slide in / slide out</td><td>transform: translate(...) </td></tr>
+</tbody>
+</table>
+</section>
+
+
+<section id="workflow">
+<h2><span class="num">06</span>推荐工作流</h2>
+
+<ol>
+  <li><strong>每次开新需求</strong>：先读 <code>CLAUDE.md</code>（术语表 + 状态机 + GOTCHA），不要靠记忆</li>
+  <li><strong>判断改动量</strong>：单一数字 / 颜色 / 类名直接改；多文件 / 涉及状态机 / 涉及视觉模型 → 先讲方案</li>
+  <li><strong>方案模式</strong>：让 AI 先输出方案（含改哪些文件、改后状态表、风险），点头再动手</li>
+  <li><strong>实施后</strong>：浏览器开 <code>guangtou.html</code>，按 CLAUDE.md "验证"段跑全部状态</li>
+  <li><strong>commit + push</strong>：中文 commit message，前缀用 <code>fix:</code> / <code>feat:</code> / <code>refactor:</code> / <code>tweak:</code>。落定后立即推 origin（项目约定）</li>
+  <li><strong>分支策略</strong>：每个迭代一个分支（<code>logo-1</code>、<code>logo-2</code>、<code>logo-3</code>...），完成后 fast-forward merge 回 main 并 push</li>
+  <li><strong>同步文档</strong>：改动到了术语 / 状态机 / 视觉模型层面，记得回去改 <code>CLAUDE.md</code>，否则下次又要重新对齐</li>
+</ol>
+
+<div class="gotcha"><strong>注意：</strong>不要 <code>--no-verify</code> 跳过 git hook、不要 <code>git push --force</code> 到 main、不要在没确认的情况下删分支。这个项目目前没配 hook，但保持习惯。</div>
+</section>
+
+
+<section id="checklist">
+<h2><span class="num">07</span>第一天上手 checklist</h2>
+
+<ol>
+  <li><code>git clone github.com/cklaozhao/guangtou-web</code></li>
+  <li>读 <code>CLAUDE.md</code>（5 分钟，必须）</li>
+  <li>浏览器双击 <code>guangtou.html</code>，把鼠标依次移到：<em>hero 空白 → 头像 → 标题 → footer 链接 → 移出窗口</em>。每个状态对照 CLAUDE.md "验证"段确认行为</li>
+  <li>跑 <code>git log --oneline</code>，看完所有 commit 都做了什么</li>
+  <li>读这份手册的 §3（典型案例）和 §4（描述方法论）</li>
+  <li>让 AI（Claude Code 或别的）按 §4 模板提一个小改动（比如把 cursor-ring 颜色从 cream 改成别的），跑通"提需求 → 方案 → 实施 → push"整个流程</li>
+  <li>遇到第一个 GOTCHA 时回到 §5 速查 + CLAUDE.md GOTCHA 段</li>
+</ol>
+
+<div class="tip"><strong>遇到任何"我不知道叫什么"的瞬间，立即回到 <a href="#how-to-describe">§4</a>。</strong>这个项目能成的关键不是技术多复杂，而是<strong>不会描述也能描述</strong>这件事被打通了。</div>
+</section>
+
+</main>
+
+<footer>
+maintained by saibo + claude · last updated 2026-05-01 · 单页文档无外部依赖，可离线浏览
+</footer>
+
+</body>
+</html>
