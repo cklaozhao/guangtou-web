@@ -33,7 +33,7 @@
 | 擦除 / 露底层环带 | `.logo::after` 的 mask 在 cursor 处 inner-r ~ outer-r 之间是 transparent，露出底层 |
 | 顶层小窗 / 线条小窗 | `--inner-r`（mask 中 cursor 0~inner-r 是 #000，露出顶层线条；默认 0 = 无小窗，头像稳定态 40） |
 | 底层环带外径 | `--outer-r`（mask 中 outer-r 处突变回 #000，圆外又是顶层；默认 1，hero 空白 100，头像稳定 maxR=对角线长） |
-| 进入头像扩散 | `animateOuterR()` —— RAF 驱动 `--outer-r` 从 100 缓动到 maxR（350ms easeOutCubic）；同时 `--inner-r` 瞬切 0→40 |
+| 进入头像扩散 | `animateOuterR()` —— RAF 驱动 `--outer-r` 从 100 缓动到 maxR（800ms easeOutCubic）；同时 `--inner-r` 瞬切 0→40 |
 | 光晕 | 已删除的 `.logo::before`（`mix-blend-mode: screen` 的高光层），不要重新加 |
 | 硬边 | mask gradient 同位置两个 stop（如 `transparent var(--inner-r), #000 var(--inner-r)`）= 零渐变带 |
 | 背景变化 | canvas 字符矩阵动画（`initGlitchCanvas` 的 `loop()`），始终运行，**不要再加暂停逻辑** |
@@ -47,9 +47,9 @@
 |---|---|---|---|---|
 | 页面初始 / 鼠标在 hero 外 | 无 / 200px / inline `opacity: 0` 隐藏 | 0（CSS 默认） | 1（CSS 默认） | 顶层（线条头像）完整显示 |
 | hero 空白处 | 无 / 200px / 大圆环加自身 mask 在头像位置挖洞 | 0 | 100（cursorRingRadius）| 顶层 + 鼠标处 100px 半径硬边圆形擦除露底层 |
-| 进入头像（动画 350ms） | `.is-on-logo` / 40px / `visibility: hidden` | 40（瞬切） | 100 → maxR（RAF 缓动） | cursor 处 40px 顶层线条小窗即时出现 + 底层环带从 40~100 扩散到 40~maxR |
+| 进入头像（动画 800ms） | `.is-on-logo` / 40px / `visibility: hidden` | 40（瞬切） | 100 → maxR（RAF 缓动） | cursor 处 40px 顶层线条小窗即时出现 + 底层环带从 40~100 扩散到 40~maxR |
 | 头像稳定 | `.is-on-logo` / 40px / `visibility: hidden` | 40 | maxR（= `Math.hypot(rect.w, rect.h)`） | cursor 处 40px 顶层小窗 + 整张其他底层；同时 `.logo` `scale(1.06)` 放大 |
-| 鼠标在标题 / footer 链接 | `.is-hidden` / 16px / 无 mask | 0 | 1 | 顶层完整显示，圆环 16px 反色叠加在文字上 |
+| 鼠标在标题 / footer 链接 | `.is-hidden` / 40px / 无 mask | 0 | 1 | 顶层完整显示，圆环 40px 反色叠加在文字上（200→40 由 cursor-ring 主规则的 width transition 0.2s 平滑过渡） |
 
 cursor-ring 的自身 mask（`--avatar-x/y/r`）在 `move()` 每帧更新，目的：当 200px 大圆环与头像重叠时，挖空头像部分 → 头像不被 difference 反色（仅在 hero 空白大圆环状态生效；`.is-hidden` / `.is-on-logo` 都通过 `mask-image: none` 关闭，且 `is-on-logo` 还加 `visibility: hidden` 整体不可见）。
 
@@ -77,7 +77,7 @@ cursor-ring 的自身 mask（`--avatar-x/y/r`）在 `move()` 每帧更新，目�
 
 1. 默认看到完整线条头像（顶层），背景字符滚动
 2. 鼠标在 hero 空白处移动 → 200px 反色圆环跟随，碰到头像边缘时硬边露底层
-3. 鼠标进头像 → 头像 `scale(1.06)` 放大；cursor 处**即时**出现 80px 直径顶层线条小窗 + 底层环带**同时**从 100r 扩散到对角线长（约 350ms）；扩散完成后整张除小窗外都是底层
-4. 鼠标到标题"光头obsidian教程" → 圆环 16px、标题下方 `::after` 下划线 `scaleX(0)→1` 填充展开
-5. 鼠标到底部备案号链接 → 系统 pointer 指针、圆环 16px、背景继续滚
+3. 鼠标进头像 → 头像 `scale(1.06)` 放大；cursor 处**即时**出现 80px 直径顶层线条小窗 + 底层环带**同时**从 100r 扩散到对角线长（约 800ms）；扩散完成后整张除小窗外都是底层
+4. 鼠标到标题"光头obsidian教程" → 圆环平滑缩到 40px、标题下方 `::after` 下划线 `scaleX(0)→1` 填充展开
+5. 鼠标到底部备案号链接 → 系统 pointer 指针、圆环 40px、背景继续滚
 6. 鼠标移出窗口 → 圆环消失、小窗收起、头像回顶层
