@@ -147,7 +147,8 @@
     .logo {
       --reveal-x: 50%;
       --reveal-y: 50%;
-      --reveal-size: 1px;
+      --inner-r: 0px;
+      --outer-r: 1px;
       position: relative;
       display: block;
       width: 100%;
@@ -176,31 +177,20 @@
       background-position: center;
       background-size: cover;
       -webkit-mask-image: radial-gradient(
-        circle var(--reveal-size) at var(--reveal-x) var(--reveal-y),
-        transparent 0,
-        transparent 100%,
-        #000 100%
+        circle at var(--reveal-x) var(--reveal-y),
+        #000 0,
+        #000 var(--inner-r),
+        transparent var(--inner-r),
+        transparent var(--outer-r),
+        #000 var(--outer-r)
       );
       mask-image: radial-gradient(
-        circle var(--reveal-size) at var(--reveal-x) var(--reveal-y),
-        transparent 0,
-        transparent 100%,
-        #000 100%
-      );
-    }
-
-    .logo.is-inverted::after {
-      -webkit-mask-image: radial-gradient(
-        circle var(--reveal-size) at var(--reveal-x) var(--reveal-y),
+        circle at var(--reveal-x) var(--reveal-y),
         #000 0,
-        #000 100%,
-        transparent 100%
-      );
-      mask-image: radial-gradient(
-        circle var(--reveal-size) at var(--reveal-x) var(--reveal-y),
-        #000 0,
-        #000 100%,
-        transparent 100%
+        #000 var(--inner-r),
+        transparent var(--inner-r),
+        transparent var(--outer-r),
+        #000 var(--outer-r)
       );
     }
 
@@ -702,16 +692,21 @@
       const logo = document.querySelector(".logo");
       const hero = document.getElementById("hero");
       const cursorRingRadius = 100;
+      const innerWindowR = 40;
       const enterDurationMs = 350;
       const interactiveSelector = "a, button, input, select, textarea";
 
       let onLogoStable = false;
       let enterAnim = null;
-      let currentReveal = 1;
+      let currentOuterR = 1;
 
-      function setReveal(value) {
-        currentReveal = value;
-        logo.style.setProperty("--reveal-size", `${value}px`);
+      function setInnerR(value) {
+        logo.style.setProperty("--inner-r", `${value}px`);
+      }
+
+      function setOuterR(value) {
+        currentOuterR = value;
+        logo.style.setProperty("--outer-r", `${value}px`);
       }
 
       function cancelEnterAnim() {
@@ -721,14 +716,14 @@
         }
       }
 
-      function animateReveal(target, durationMs, onDone) {
+      function animateOuterR(target, durationMs, onDone) {
         cancelEnterAnim();
-        const start = currentReveal;
+        const start = currentOuterR;
         const startT = performance.now();
         const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
         function tick(now) {
           const t = Math.min(1, (now - startT) / durationMs);
-          setReveal(start + (target - start) * easeOutCubic(t));
+          setOuterR(start + (target - start) * easeOutCubic(t));
           if (t < 1) {
             enterAnim = requestAnimationFrame(tick);
           } else {
@@ -762,20 +757,19 @@
 
         if (onLogo) {
           if (!onLogoStable && enterAnim === null) {
+            setInnerR(innerWindowR);
             const maxR = Math.hypot(rect.width, rect.height);
-            animateReveal(maxR, enterDurationMs, () => {
-              logo.classList.add("is-inverted");
-              setReveal(40);
+            animateOuterR(maxR, enterDurationMs, () => {
               onLogoStable = true;
             });
           }
         } else {
           if (onLogoStable || enterAnim !== null) {
             cancelEnterAnim();
-            logo.classList.remove("is-inverted");
+            setInnerR(0);
             onLogoStable = false;
           }
-          setReveal((onOtherInteractive || !inHero) ? 1 : cursorRingRadius);
+          setOuterR((onOtherInteractive || !inHero) ? 1 : cursorRingRadius);
         }
 
         const cx = rect.width / 2;
@@ -794,9 +788,9 @@
       document.addEventListener("mousemove", update);
       document.addEventListener("mouseleave", () => {
         cancelEnterAnim();
-        logo.classList.remove("is-inverted");
+        setInnerR(0);
         onLogoStable = false;
-        setReveal(1);
+        setOuterR(1);
         logo.style.transform = "translateZ(32px)";
       });
     }

@@ -30,42 +30,46 @@
 | 圆环 / 光标圆环 / 鼠标光圈 | `.cursor-ring` 元素 |
 | 颜色反转 / 反色 | `mix-blend-mode: difference` |
 | 遮罩 | CSS `mask-image` / `-webkit-mask-image` |
-| 擦除 / 橡皮擦效果 | `.logo::after` 的 radial-gradient mask 在鼠标处的透明洞 |
-| 反向遮罩 / 反转的遮罩 | `.logo.is-inverted::after` —— 中心 `#000`（露顶层）、外部 `transparent`（露底层），方向与默认相反 |
+| 擦除 / 露底层环带 | `.logo::after` 的 mask 在 cursor 处 inner-r ~ outer-r 之间是 transparent，露出底层 |
+| 顶层小窗 / 线条小窗 | `--inner-r`（mask 中 cursor 0~inner-r 是 #000，露出顶层线条；默认 0 = 无小窗，头像稳定态 40） |
+| 底层环带外径 | `--outer-r`（mask 中 outer-r 处突变回 #000，圆外又是顶层；默认 1，hero 空白 100，头像稳定 maxR=对角线长） |
+| 进入头像扩散 | `animateOuterR()` —— RAF 驱动 `--outer-r` 从 100 缓动到 maxR（350ms easeOutCubic）；同时 `--inner-r` 瞬切 0→40 |
 | 光晕 | 已删除的 `.logo::before`（`mix-blend-mode: screen` 的高光层），不要重新加 |
-| 硬边 | mask gradient 的 stop 设成 `transparent 100%, #000 100%`（同位置两个 stop = 零渐变带） |
+| 硬边 | mask gradient 同位置两个 stop（如 `transparent var(--inner-r), #000 var(--inner-r)`）= 零渐变带 |
 | 背景变化 | canvas 字符矩阵动画（`initGlitchCanvas` 的 `loop()`），始终运行，**不要再加暂停逻辑** |
 | 备案区 | `.footer` 元素，`position: fixed; bottom: 0`，在 hero 之外 |
 
 ## 交互状态机
 
-`updateInteractiveState`（`initCursor` 内）每次 mousemove 给 `.cursor-ring` 加状态类；`update`（`initLogoTilt` 内）联动给 `.logo` 切 `.is-inverted` 并写 `--reveal-x/y/size`。
+`updateInteractiveState`（`initCursor` 内）每次 mousemove 给 `.cursor-ring` 加状态类；`update`（`initLogoTilt` 内）联动写 `.logo` 的 `--reveal-x/y` + `--inner-r` + `--outer-r`，并通过 `animateOuterR` 驱动进入头像扩散过渡。
 
-| 鼠标位置 | cursor-ring 类 / 尺寸 | logo 类 | `--reveal-size` | 视觉 |
+| 鼠标位置 | cursor-ring 类 / 尺寸 | --inner-r | --outer-r | 视觉 |
 |---|---|---|---|---|
-| 页面初始 / 鼠标在 hero 外 | 无 / 200px / inline `opacity: 0` 隐藏 | 无 | 1px (CSS 默认) | 顶层（线条头像）完整显示 |
-| hero 空白处 | 无 / 200px / 大圆环加自身 mask 在头像位置挖洞 | 无 | 100 (cursorRingRadius) | 顶层 + 鼠标处 100px 半径硬边圆形擦除露底层 |
-| 鼠标进头像 | `.is-on-logo` / 40px / 无 mask | `.is-inverted` | 40 | 头像几乎全是底层，鼠标处 80px 直径反向露顶层；同时 `.logo` `scale(1.06)` 放大 |
-| 鼠标在标题 / footer 链接 | `.is-hidden` / 16px / 无 mask | 无 | 1px | 顶层完整显示，圆环 16px 反色叠加在文字上 |
+| 页面初始 / 鼠标在 hero 外 | 无 / 200px / inline `opacity: 0` 隐藏 | 0（CSS 默认） | 1（CSS 默认） | 顶层（线条头像）完整显示 |
+| hero 空白处 | 无 / 200px / 大圆环加自身 mask 在头像位置挖洞 | 0 | 100（cursorRingRadius）| 顶层 + 鼠标处 100px 半径硬边圆形擦除露底层 |
+| 进入头像（动画 350ms） | `.is-on-logo` / 40px / `visibility: hidden` | 40（瞬切） | 100 → maxR（RAF 缓动） | cursor 处 40px 顶层线条小窗即时出现 + 底层环带从 40~100 扩散到 40~maxR |
+| 头像稳定 | `.is-on-logo` / 40px / `visibility: hidden` | 40 | maxR（= `Math.hypot(rect.w, rect.h)`） | cursor 处 40px 顶层小窗 + 整张其他底层；同时 `.logo` `scale(1.06)` 放大 |
+| 鼠标在标题 / footer 链接 | `.is-hidden` / 16px / 无 mask | 0 | 1 | 顶层完整显示，圆环 16px 反色叠加在文字上 |
 
-cursor-ring 的自身 mask（`--avatar-x/y/r`）在 `move()` 每帧更新，目的：当 200px 大圆环与头像重叠时，挖空头像部分 → 头像不被 difference 反色（仅在大圆环状态生效；`.is-hidden` / `.is-on-logo` 都通过 `mask-image: none` 关闭）。
+cursor-ring 的自身 mask（`--avatar-x/y/r`）在 `move()` 每帧更新，目的：当 200px 大圆环与头像重叠时，挖空头像部分 → 头像不被 difference 反色（仅在 hero 空白大圆环状态生效；`.is-hidden` / `.is-on-logo` 都通过 `mask-image: none` 关闭，且 `is-on-logo` 还加 `visibility: hidden` 整体不可见）。
 
 ## 关键 GOTCHA（踩过的坑）
 
-1. **不要用 `--reveal-size: 0px`**——`radial-gradient(circle 0 …)` 在 Chromium / WebKit 都是退化值，会回退到 `farthest-corner` 默认尺寸 → mask 整张透明 → 默认就漏底层。永远用 `1px` 作为"无擦除"的安全值
-2. **直径 vs 半径**：`.cursor-ring` 的 CSS `width/height` 是**视觉直径**，但 `mask-image: radial-gradient(circle <size> …)` 里的 `<size>` 是**半径**。让圆环和 mask 露出区视觉重合时记得 `width = 2 × reveal-size`。曾经因为两边都设成 50 出现"50px 圆环 + 100px mask 露出区"的双圈 BUG
-3. **不要给 mask-image 加 transition**：`--reveal-x/y` 每帧都变，加 transition 会让圆洞肉眼可见地滞后于鼠标
-4. **不要给 cursor-ring 加 mix-blend-mode 之外的渲染依赖**：source 的 `is-hidden` 原本写 `opacity: 0`，但 `hero.mouseenter` 里 inline `opacity: 1` 会覆盖；当前 `is-hidden` 已删除 `opacity: 0`，依赖 inline 控制
+1. **不要让 `--outer-r ≤ --inner-r`**——会导致 mask 中 inner / outer stop 重叠或反序，stop 排序混乱视觉退化。用 `1px` 作为"无擦除"安全值；进入头像扩散动画 outer-r 必须始终 ≥ inner-r（实际从 100 起步、目标 maxR ≈ 250+，inner-r=40，安全）
+2. **直径 vs 半径**：`.cursor-ring` 的 CSS `width/height` 是**视觉直径**，但 mask radial-gradient 里 stop 位置是**半径**。让圆环和 mask 露出区视觉重合时 `width = 2 × outer-r`。早期曾因两边都设 50 出现"50px 圆环 + 100px mask 露出区"的双圈 BUG。注意头像上 cursor-ring 已 `visibility: hidden`，这个匹配只对 hero 空白模式生效
+3. **不要给 mask-image 加 transition**：`--reveal-x/y` 每帧都变，加 transition 会让圆洞肉眼可见地滞后于鼠标。头像进入扩散用 RAF 驱动 `--outer-r` 数值，绕开了这个限制
+4. **不要给 cursor-ring 加 mix-blend-mode 之外的渲染依赖**：source 的 `is-hidden` 原本写 `opacity: 0`，但 `hero.mouseenter` 里 inline `opacity: 1` 会覆盖；当前 `is-hidden` 已删除 `opacity: 0`，依赖 inline 控制；`is-on-logo` 改用 `visibility: hidden` 避开这个冲突
 5. **不要恢复"背景暂停"功能**：之前的 `isFrozen` / `setSceneFrozen` / `.is-time-stop` 逻辑全部已清理，glitch loop 始终运行
 6. **不要恢复 `.logo::before` 高光**：用户明确不要这个"光晕"
 7. **`.logo-link` hit-test 是矩形不是圆**——`border-radius: 50%` 只影响视觉。判定"在头像上"如果用 `under.closest(".logo-link")` 是按矩形；如果想按视觉圆形，用 `Math.hypot(localX-cx, localY-cy) <= rect.width/2`。当前代码两种都用：`onLogo` 用矩形（决定遮罩切换），tilt/scale 用圆形（决定 3D 倾斜）
+8. **`.is-inverted` 类与 `--reveal-size` 已淘汰**——历史方案下 `.logo.is-inverted::after` 是反向 mask，现在统一成单一参数化 mask（inner-r / outer-r），不再 toggle `.is-inverted`、不再写 `--reveal-size`；不要在 CSS 钩子或 JS 里再依赖这两个名字
 
 ## 关键 JS 函数（位于 `guangtou.html` 内 `<script>` 块）
 
 - `typeTitle()` —— 标题打字机效果（带随机抖动）
 - `initGlitchCanvas()` —— 背景字符矩阵；`mutate / draw / fadeColors` 在 `loop()` 里持续运行；不要再添加 `isFrozen` 之类的暂停状态
 - `initCursor()` —— cursor-ring 跟随、状态切换、自身 mask 更新（在 `move()` 内每帧调 `link.getBoundingClientRect()` 写 `--avatar-x/y/r`）
-- `initLogoTilt()` —— 名字其实管两件事：mask reveal 状态切换 + 3D tilt + scale。`update()` 是核心
+- `initLogoTilt()` —— mask 状态机（`--inner-r` / `--outer-r`）+ 3D tilt + scale。`update()` 是状态机入口；`animateOuterR(target, ms, onDone)` 用 RAF 驱动 `--outer-r` 缓动（easeOutCubic），用于进入头像扩散过渡
 
 ## 验证
 
@@ -73,7 +77,7 @@ cursor-ring 的自身 mask（`--avatar-x/y/r`）在 `move()` 每帧更新，目�
 
 1. 默认看到完整线条头像（顶层），背景字符滚动
 2. 鼠标在 hero 空白处移动 → 200px 反色圆环跟随，碰到头像边缘时硬边露底层
-3. 鼠标进头像 → 圆环缩 40px、头像 scale 放大、头像变底层、鼠标处反向露顶层
+3. 鼠标进头像 → 头像 `scale(1.06)` 放大；cursor 处**即时**出现 80px 直径顶层线条小窗 + 底层环带**同时**从 100r 扩散到对角线长（约 350ms）；扩散完成后整张除小窗外都是底层
 4. 鼠标到标题"光头obsidian教程" → 圆环 16px、标题下方 `::after` 下划线 `scaleX(0)→1` 填充展开
 5. 鼠标到底部备案号链接 → 系统 pointer 指针、圆环 16px、背景继续滚
-6. 鼠标移出窗口 → 圆环消失、头像回顶层
+6. 鼠标移出窗口 → 圆环消失、小窗收起、头像回顶层
