@@ -702,7 +702,42 @@
       const logo = document.querySelector(".logo");
       const hero = document.getElementById("hero");
       const cursorRingRadius = 100;
+      const enterDurationMs = 350;
       const interactiveSelector = "a, button, input, select, textarea";
+
+      let onLogoStable = false;
+      let enterAnim = null;
+      let currentReveal = 1;
+
+      function setReveal(value) {
+        currentReveal = value;
+        logo.style.setProperty("--reveal-size", `${value}px`);
+      }
+
+      function cancelEnterAnim() {
+        if (enterAnim !== null) {
+          cancelAnimationFrame(enterAnim);
+          enterAnim = null;
+        }
+      }
+
+      function animateReveal(target, durationMs, onDone) {
+        cancelEnterAnim();
+        const start = currentReveal;
+        const startT = performance.now();
+        const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
+        function tick(now) {
+          const t = Math.min(1, (now - startT) / durationMs);
+          setReveal(start + (target - start) * easeOutCubic(t));
+          if (t < 1) {
+            enterAnim = requestAnimationFrame(tick);
+          } else {
+            enterAnim = null;
+            if (onDone) onDone();
+          }
+        }
+        enterAnim = requestAnimationFrame(tick);
+      }
 
       function update(event) {
         const rect = link.getBoundingClientRect();
@@ -725,16 +760,23 @@
           event.clientX >= heroRect.left && event.clientX <= heroRect.right &&
           event.clientY >= heroRect.top && event.clientY <= heroRect.bottom;
 
-        logo.classList.toggle("is-inverted", onLogo);
-        let revealSize;
         if (onLogo) {
-          revealSize = 40;
-        } else if (onOtherInteractive || !inHero) {
-          revealSize = 1;
+          if (!onLogoStable && enterAnim === null) {
+            const maxR = Math.hypot(rect.width, rect.height);
+            animateReveal(maxR, enterDurationMs, () => {
+              logo.classList.add("is-inverted");
+              setReveal(40);
+              onLogoStable = true;
+            });
+          }
         } else {
-          revealSize = cursorRingRadius;
+          if (onLogoStable || enterAnim !== null) {
+            cancelEnterAnim();
+            logo.classList.remove("is-inverted");
+            onLogoStable = false;
+          }
+          setReveal((onOtherInteractive || !inHero) ? 1 : cursorRingRadius);
         }
-        logo.style.setProperty("--reveal-size", `${revealSize}px`);
 
         const cx = rect.width / 2;
         const cy = rect.height / 2;
@@ -751,7 +793,10 @@
 
       document.addEventListener("mousemove", update);
       document.addEventListener("mouseleave", () => {
-        logo.style.setProperty("--reveal-size", "1px");
+        cancelEnterAnim();
+        logo.classList.remove("is-inverted");
+        onLogoStable = false;
+        setReveal(1);
         logo.style.transform = "translateZ(32px)";
       });
     }
