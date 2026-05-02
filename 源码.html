@@ -1,0 +1,899 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MiMo 100T Hero Replica</title>
+    <style>
+      :root {
+        --ink: #ffffff;
+        --muted: rgba(255, 255, 255, 0.56);
+        --cream: #f6f3ec;
+        --canvas-bg: #1a1a1a;
+        --line: rgba(255, 255, 255, 0.35);
+        --mono: Menlo, Monaco, Consolas, "Courier New", monospace;
+        --sans: Inter, "Segoe UI", "PingFang SC", "Microsoft YaHei", Arial,
+          sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        background: #000;
+        scroll-behavior: smooth;
+        overflow-x: hidden;
+      }
+
+      body {
+        min-width: 375px;
+        width: 100%;
+        margin: 0;
+        font-family: var(--sans);
+        color: var(--ink);
+        background: #000;
+        -webkit-font-smoothing: antialiased;
+        overflow-x: hidden;
+      }
+
+      button {
+        font: inherit;
+      }
+
+      .page {
+        min-height: 100vh;
+        overflow-x: hidden;
+        background: #000;
+      }
+
+      .topbar {
+        position: fixed;
+        inset: 0 0 auto 0;
+        z-index: 20;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 60px;
+        padding: 0 30px;
+        font-family: var(--mono);
+        color: #fff;
+        background: rgba(0, 0, 0, 0.02);
+        backdrop-filter: blur(2px);
+      }
+
+      .topbar-left,
+      .topbar-right,
+      .status {
+        display: flex;
+        align-items: center;
+      }
+
+      .topbar-left {
+        gap: 16px;
+      }
+
+      .topbar-right {
+        gap: 15px;
+      }
+
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-family: var(--sans);
+        font-size: 21px;
+        font-weight: 700;
+        line-height: 1;
+        letter-spacing: -0.05em;
+      }
+
+      .brand-orbit {
+        width: 13px;
+        height: 13px;
+        border: 2px solid currentColor;
+        border-radius: 50%;
+        transform: rotate(-18deg);
+      }
+
+      .status {
+        gap: 10px;
+        font-size: 11px;
+        letter-spacing: 2.2px;
+        white-space: nowrap;
+      }
+
+      .status-dot {
+        width: 6px;
+        height: 6px;
+        background: #fff;
+        border-radius: 999px;
+        animation: pulse 2.2s ease-in-out infinite;
+      }
+
+      .countdown {
+        font-size: 11px;
+        letter-spacing: 1.98px;
+        white-space: nowrap;
+      }
+
+      .topbar button {
+        height: 30px;
+        padding: 0 16px;
+        color: #fff;
+        font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+        font-size: 11px;
+        font-weight: 500;
+        letter-spacing: 1.32px;
+        cursor: pointer;
+        background: transparent;
+        border: 1px solid var(--line);
+        transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+      }
+
+      .topbar button:hover {
+        color: #000;
+        background: #fff;
+        border-color: #fff;
+      }
+
+      .share-btn {
+        border-color: rgba(255, 255, 255, 0.62) !important;
+      }
+
+      .hero {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        min-height: 100vh;
+        overflow: hidden;
+        isolation: isolate;
+      }
+
+      .hero-bg,
+      .glitch-canvas,
+      .vignette-outer,
+      .vignette-center,
+      .hero-overlay,
+      .scanline {
+        position: absolute;
+        inset: 0;
+      }
+
+      .hero-bg {
+        z-index: -4;
+        overflow: hidden;
+        background: var(--canvas-bg);
+      }
+
+      .glitch-canvas {
+        width: 100%;
+        height: 100%;
+      }
+
+      .vignette-outer {
+        z-index: -2;
+        pointer-events: none;
+        background: radial-gradient(circle, rgba(0, 0, 0, 0) 58%, #000 100%);
+      }
+
+      .vignette-center {
+        z-index: -1;
+        pointer-events: none;
+        background: radial-gradient(
+          circle,
+          rgba(0, 0, 0, 0.82) 0%,
+          rgba(0, 0, 0, 0.18) 42%,
+          rgba(0, 0, 0, 0) 62%
+        );
+      }
+
+      .hero-overlay {
+        z-index: 0;
+        pointer-events: none;
+        background: rgba(0, 0, 0, 0.5);
+      }
+
+      .scanline {
+        z-index: 1;
+        pointer-events: none;
+        opacity: 0.08;
+        background-image: linear-gradient(
+          to bottom,
+          rgba(255, 255, 255, 0.18) 0,
+          rgba(255, 255, 255, 0) 1px
+        );
+        background-size: 100% 4px;
+      }
+
+      .hero-content {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        width: min(977px, calc(100vw - 32px));
+        min-height: 100vh;
+        padding: 84px 40px 80px;
+        text-align: center;
+      }
+
+      .mobile-status {
+        display: none;
+      }
+
+      .hero-title {
+        min-height: 122px;
+        max-width: 100%;
+        margin: 0;
+        font-family: var(--sans);
+        font-size: 52px;
+        font-weight: 600;
+        line-height: 60px;
+        letter-spacing: 0;
+        white-space: pre-wrap;
+        background: linear-gradient(90deg, #7e8f9e, #b0beca 44%, #ffffff 92%);
+        background-clip: text;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .typed-cursor {
+        display: inline-block;
+        animation: cursor-blink 1s ease-in-out infinite;
+      }
+
+      .token-block {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        align-items: center;
+        width: 100%;
+        margin: 18px 0 24px;
+        animation: fade-in-up 0.6s ease-out 0.2s;
+      }
+
+      .token-label {
+        margin: 0;
+        font-family: var(--mono);
+        font-size: 11px;
+        color: #fff;
+        text-transform: uppercase;
+        letter-spacing: 3.85px;
+      }
+
+      .token-number {
+        min-height: 64px;
+        margin: 0;
+        font-family: var(--sans);
+        font-size: 64px;
+        font-weight: 500;
+        font-variant-numeric: tabular-nums;
+        line-height: 64px;
+        color: #fff;
+        letter-spacing: -1.7px;
+        white-space: nowrap;
+      }
+
+      .token-number .digit,
+      .token-number .comma {
+        display: inline-block;
+        text-align: center;
+      }
+
+      .token-number .digit {
+        width: 40px;
+      }
+
+      .token-number .comma {
+        width: 20px;
+      }
+
+      .token-total {
+        margin: 0;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 13px;
+        font-style: italic;
+        color: #a8a49c;
+      }
+
+      .apply-btn {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: min(534px, 100%);
+        height: 55px;
+        padding: 0 16px;
+        color: #fff;
+        cursor: pointer;
+        background: rgba(246, 243, 236, 0.28);
+        backdrop-filter: blur(3px);
+        border: 1px solid #fff;
+        border-radius: 0;
+        animation: fade-in-up 0.6s ease-out 0.4s;
+        transition: background 0.15s ease, transform 0.15s ease;
+      }
+
+      .apply-btn:hover {
+        background: rgba(246, 243, 236, 0.38);
+        transform: translateY(-1px);
+      }
+
+      .apply-btn span:first-child {
+        font-family: var(--mono);
+        font-size: 12px;
+        letter-spacing: 2.16px;
+        white-space: nowrap;
+      }
+
+      .apply-btn svg {
+        width: 16px;
+        height: 16px;
+      }
+
+      .scroll-down {
+        position: absolute;
+        bottom: 48px;
+        left: 50%;
+        z-index: 4;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 48px;
+        height: 48px;
+        padding: 0;
+        color: #fff;
+        cursor: pointer;
+        background: transparent;
+        border: 0;
+        opacity: 0.62;
+        transform: translateX(-50%);
+        transition: opacity 0.2s ease, transform 0.2s ease;
+      }
+
+      .scroll-down:hover {
+        opacity: 1;
+        transform: translateX(-50%) translateY(3px);
+      }
+
+      .cursor-ring {
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 30;
+        width: 200px;
+        height: 200px;
+        pointer-events: none;
+        background: var(--cream);
+        border-radius: 50%;
+        mix-blend-mode: difference;
+        opacity: 0;
+        transform: translate(-50%, -50%);
+        transition: width 0.2s cubic-bezier(0.22, 1, 0.36, 1),
+          height 0.2s cubic-bezier(0.22, 1, 0.36, 1),
+          opacity 0.15s ease;
+      }
+
+      .cursor-ring.is-hidden {
+        width: 16px;
+        height: 16px;
+        opacity: 0;
+      }
+
+      .source-panel {
+        display: grid;
+        gap: 14px;
+        width: min(900px, calc(100% - 60px));
+        margin: 0 auto;
+        padding: 64px 12px 76px;
+        border-top: 1px solid rgba(255, 255, 255, 0.15);
+      }
+
+      .source-panel h2,
+      .source-panel p {
+        margin: 0;
+        font-family: var(--mono);
+      }
+
+      .source-panel h2 {
+        font-size: 16px;
+        font-weight: 400;
+        color: rgba(255, 255, 255, 0.42);
+        letter-spacing: 3px;
+      }
+
+      .source-panel p {
+        max-width: 780px;
+        font-size: 13px;
+        line-height: 1.7;
+        color: rgba(255, 255, 255, 0.56);
+      }
+
+      @keyframes pulse {
+        0%,
+        50% {
+          opacity: 1;
+        }
+        50.01%,
+        100% {
+          opacity: 0.25;
+        }
+      }
+
+      @keyframes cursor-blink {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0;
+        }
+      }
+
+      @keyframes fade-in-up {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @media (max-width: 768px) {
+        .topbar {
+          height: 52px;
+          padding: 0 16px;
+        }
+
+        .brand {
+          font-size: 19px;
+        }
+
+        .status,
+        .countdown {
+          display: none;
+        }
+
+        .topbar-right {
+          gap: 8px;
+        }
+
+        .topbar button {
+          height: 28px;
+          padding: 0 12px;
+          font-size: 10px;
+        }
+
+        .hero-content {
+          width: 100%;
+          max-width: 100vw;
+          padding: 80px 16px;
+          overflow: hidden;
+        }
+
+        .mobile-status {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          align-items: center;
+          width: 100%;
+          margin-bottom: 12px;
+          font-family: var(--mono);
+          font-size: 11px;
+          letter-spacing: 2px;
+        }
+
+        .mobile-status-row {
+          display: flex;
+          gap: 10px;
+          align-items: center;
+        }
+
+        .mobile-status .status-dot {
+          opacity: 0.3;
+        }
+
+        .hero-title {
+          width: 100%;
+          max-width: 340px;
+          min-height: 80px;
+          padding: 0;
+          font-size: 21px;
+          line-height: 38px;
+          overflow-wrap: anywhere;
+        }
+
+        .token-label {
+          font-size: 9px;
+          letter-spacing: 2.5px;
+        }
+
+        .token-number {
+          width: 100%;
+          max-width: 340px;
+          min-height: 64px;
+          font-size: 30px;
+          line-height: 64px;
+          letter-spacing: -0.8px;
+        }
+
+        .token-number .digit {
+          width: 18px;
+        }
+
+        .token-number .comma {
+          width: 9px;
+        }
+
+        .token-total {
+          font-size: 11px;
+        }
+
+        .apply-btn {
+          width: min(300px, 100%);
+          height: 48px;
+        }
+
+        .apply-btn span:first-child {
+          font-size: 11px;
+          letter-spacing: 1.5px;
+        }
+
+        .cursor-ring {
+          display: none;
+        }
+
+        .source-panel {
+          width: min(900px, calc(100% - 32px));
+          padding-top: 40px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <header class="topbar" aria-label="顶部导航">
+        <div class="topbar-left">
+          <div class="brand" aria-label="Xiaomi MiMO">
+            <span>Xiaomi</span><span>MiMO</span><span class="brand-orbit"></span>
+          </div>
+          <div class="status">
+            <span class="status-dot" aria-hidden="true"></span>
+            <span>发放进行中</span>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <span class="countdown" id="topCountdown">倒计时 --</span>
+          <button type="button">EN</button>
+          <button type="button" class="share-btn">分享</button>
+        </div>
+      </header>
+
+      <section class="hero" id="hero">
+        <div class="cursor-ring" id="cursorRing" aria-hidden="true"></div>
+        <div class="hero-bg" aria-hidden="true">
+          <canvas class="glitch-canvas" id="glitchCanvas"></canvas>
+          <div class="vignette-outer"></div>
+          <div class="vignette-center"></div>
+        </div>
+        <div class="hero-overlay" aria-hidden="true"></div>
+        <div class="scanline" aria-hidden="true"></div>
+
+        <div class="hero-content">
+          <div class="mobile-status">
+            <div class="mobile-status-row">
+              <span class="status-dot" aria-hidden="true"></span>
+              <span>发放进行中</span>
+            </div>
+            <div id="mobileCountdown">倒计时 --</div>
+          </div>
+
+          <h1 class="hero-title" aria-label="Xiaomi MiMo Orbit 百万亿 Token 创造者激励计划">
+            <span id="typedTitle"></span><span class="typed-cursor">_</span>
+          </h1>
+
+          <div class="token-block">
+            <p class="token-label">剩余 TOKENS</p>
+            <p class="token-number" id="tokenNumber" aria-label="剩余 Tokens"></p>
+            <p class="token-total">共 100,000,000,000,000</p>
+          </div>
+
+          <button class="apply-btn" type="button">
+            <span>立即申请</span>
+            <span aria-hidden="true">
+              <svg viewBox="0 0 14 14" fill="none">
+                <path
+                  d="M1.167 7.584V6.417h9.434L8.296 4.113l.825-.825L12.834 7l-3.713 3.713-.825-.825 2.304-2.304H1.167z"
+                  fill="currentColor"
+                />
+              </svg>
+            </span>
+          </button>
+        </div>
+
+        <button class="scroll-down" type="button" aria-label="Scroll to source">
+          <svg width="32" height="32" viewBox="0 0 16 16" fill="none">
+            <path
+              d="M8.583 2.167H7.417v9.434L5.113 9.297l-.825.825L8 13.834l3.712-3.712-.825-.825-2.304 2.304V2.167z"
+              fill="currentColor"
+            />
+          </svg>
+        </button>
+      </section>
+
+      <section class="source-panel" id="source">
+        <h2>源码说明</h2>
+        <p>
+          这个页面是单文件复刻版，源码就在当前 HTML 内：CSS 负责首屏结构、暗角、渐变文字和响应式布局，JS 负责 canvas 字符矩阵、打字机标题、倒计时、Token 数字和跟随光标。
+        </p>
+      </section>
+    </main>
+
+    <script>
+      const titleText = "Xiaomi MiMo Orbit\n百万亿 Token 创造者激励计划";
+      const typedTitle = document.getElementById("typedTitle");
+      const tokenNumber = document.getElementById("tokenNumber");
+      const topCountdown = document.getElementById("topCountdown");
+      const mobileCountdown = document.getElementById("mobileCountdown");
+      const scrollDown = document.querySelector(".scroll-down");
+
+      function typeTitle() {
+        let index = 0;
+
+        function tick() {
+          typedTitle.textContent = titleText.slice(0, index);
+          index += 1;
+
+          if (index <= titleText.length) {
+            const jitter = Math.random() * 40 - 20;
+            window.setTimeout(tick, 75 + jitter);
+          }
+        }
+
+        window.setTimeout(tick, 400);
+      }
+
+      function formatToken(value) {
+        return new Intl.NumberFormat("en-US").format(Math.max(0, Math.floor(value)));
+      }
+
+      function renderToken(value) {
+        tokenNumber.replaceChildren();
+        for (const char of formatToken(value)) {
+          const span = document.createElement("span");
+          span.className = char === "," ? "comma" : "digit";
+          span.textContent = char;
+          tokenNumber.append(span);
+        }
+      }
+
+      function runTokenCounter() {
+        let value = 90724006113722;
+        renderToken(value);
+        window.setInterval(() => {
+          value -= Math.floor(180000 + Math.random() * 720000);
+          renderToken(value);
+        }, 3000);
+      }
+
+      function formatRemaining(seconds) {
+        const safeSeconds = Math.max(0, seconds);
+        const days = Math.floor(safeSeconds / 86400);
+        const hours = Math.floor((safeSeconds % 86400) / 3600);
+        const minutes = Math.floor((safeSeconds % 3600) / 60);
+        const secs = safeSeconds % 60;
+        return `${days}天 ${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+      }
+
+      function runCountdown() {
+        const endAt = new Date("2026-05-28T00:00:00+08:00").getTime();
+
+        function update() {
+          const seconds = Math.floor((endAt - Date.now()) / 1000);
+          const label = `倒计时 ${formatRemaining(seconds)}`;
+          topCountdown.textContent = label;
+          mobileCountdown.textContent = label;
+        }
+
+        update();
+        window.setInterval(update, 1000);
+      }
+
+      function initGlitchCanvas() {
+        const canvas = document.getElementById("glitchCanvas");
+        const ctx = canvas.getContext("2d");
+        const palette = ["#53514D", "#53514D", "#998f84"];
+        const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$&*()-_+=/[]{};:<>.,0123456789";
+        const fontSize = 16;
+        const cellWidth = 10;
+        const cellHeight = 20;
+        const frameMs = 50;
+        const fadeStep = 0.05;
+        let cells = [];
+        let columns = 0;
+        let rows = 0;
+        let lastFrame = Date.now();
+        let animationFrame = 0;
+
+        function randomChar() {
+          return chars[Math.floor(Math.random() * chars.length)];
+        }
+
+        function randomColor() {
+          return palette[Math.floor(Math.random() * palette.length)];
+        }
+
+        function hexToRgb(hex) {
+          const expanded = hex.replace(
+            /^#?([\da-f])([\da-f])([\da-f])$/i,
+            (_, r, g, b) => r + r + g + g + b + b
+          );
+          const match = /^#?([\da-f]{2})([\da-f]{2})([\da-f]{2})$/i.exec(expanded);
+          return match
+            ? {
+                r: Number.parseInt(match[1], 16),
+                g: Number.parseInt(match[2], 16),
+                b: Number.parseInt(match[3], 16),
+              }
+            : null;
+        }
+
+        function mixColor(from, to, progress) {
+          return `rgb(${Math.round(from.r + (to.r - from.r) * progress)},${Math.round(
+            from.g + (to.g - from.g) * progress
+          )},${Math.round(from.b + (to.b - from.b) * progress)})`;
+        }
+
+        function seedCells() {
+          cells = Array.from({ length: columns * rows }, () => {
+            const color = randomColor();
+            return {
+              char: randomChar(),
+              color,
+              targetColor: randomColor(),
+              progress: 1,
+            };
+          });
+        }
+
+        function draw() {
+          const rect = canvas.getBoundingClientRect();
+          ctx.clearRect(0, 0, rect.width, rect.height);
+          ctx.font = `${fontSize}px monospace`;
+          ctx.textBaseline = "top";
+
+          for (let index = 0; index < cells.length; index += 1) {
+            const cell = cells[index];
+            ctx.fillStyle = cell.color;
+            ctx.fillText(
+              cell.char,
+              (index % columns) * cellWidth,
+              Math.floor(index / columns) * cellHeight
+            );
+          }
+        }
+
+        function mutate() {
+          const amount = Math.max(1, Math.floor(cells.length * 0.05));
+          for (let i = 0; i < amount; i += 1) {
+            const index = Math.floor(Math.random() * cells.length);
+            cells[index].char = randomChar();
+            cells[index].targetColor = randomColor();
+            cells[index].progress = 0;
+          }
+        }
+
+        function fadeColors() {
+          let changed = false;
+
+          for (const cell of cells) {
+            if (cell.progress >= 1) continue;
+            cell.progress = Math.min(1, cell.progress + fadeStep);
+            const from = hexToRgb(cell.color);
+            const to = hexToRgb(cell.targetColor);
+            if (from && to) {
+              cell.color = mixColor(from, to, cell.progress);
+              changed = true;
+            }
+          }
+
+          if (changed) draw();
+        }
+
+        function resize() {
+          const parent = canvas.parentElement;
+          const rect = parent.getBoundingClientRect();
+          const ratio = window.devicePixelRatio || 1;
+          canvas.width = rect.width * ratio;
+          canvas.height = rect.height * ratio;
+          canvas.style.width = `${rect.width}px`;
+          canvas.style.height = `${rect.height}px`;
+          ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+          columns = Math.ceil(rect.width / cellWidth);
+          rows = Math.ceil(rect.height / cellHeight);
+          seedCells();
+          draw();
+        }
+
+        function loop() {
+          const now = Date.now();
+          if (now - lastFrame >= frameMs) {
+            mutate();
+            draw();
+            lastFrame = now;
+          }
+          fadeColors();
+          animationFrame = requestAnimationFrame(loop);
+        }
+
+        resize();
+        loop();
+
+        let resizeTimer = 0;
+        const observer = new ResizeObserver(() => {
+          window.clearTimeout(resizeTimer);
+          resizeTimer = window.setTimeout(() => {
+            cancelAnimationFrame(animationFrame);
+            resize();
+            loop();
+          }, 100);
+        });
+
+        observer.observe(canvas.parentElement);
+      }
+
+      function initCursor() {
+        const hero = document.getElementById("hero");
+        const cursor = document.getElementById("cursorRing");
+        const interactiveSelector = "button, a, input, select, textarea";
+        let targetX = 0;
+        let targetY = 0;
+        let currentX = -200;
+        let currentY = -200;
+
+        function move() {
+          currentX += (targetX - currentX) * 0.18;
+          currentY += (targetY - currentY) * 0.18;
+          cursor.style.left = `${currentX}px`;
+          cursor.style.top = `${currentY}px`;
+          requestAnimationFrame(move);
+        }
+
+        hero.addEventListener("mouseenter", () => {
+          cursor.style.opacity = "1";
+          hero.style.cursor = "none";
+        });
+
+        hero.addEventListener("mouseleave", () => {
+          cursor.style.opacity = "0";
+          hero.style.cursor = "";
+        });
+
+        hero.addEventListener("mousemove", (event) => {
+          targetX = event.clientX;
+          targetY = event.clientY;
+          const element = document.elementFromPoint(event.clientX, event.clientY);
+          const shouldHide = element && element.closest(interactiveSelector);
+          cursor.classList.toggle("is-hidden", Boolean(shouldHide));
+        });
+
+        move();
+      }
+
+      scrollDown.addEventListener("click", () => {
+        document.getElementById("source").scrollIntoView({ behavior: "smooth" });
+      });
+
+      typeTitle();
+      runTokenCounter();
+      runCountdown();
+      initGlitchCanvas();
+      initCursor();
+    </script>
+  </body>
+</html>
