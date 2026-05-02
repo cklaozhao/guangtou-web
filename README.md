@@ -1,7 +1,7 @@
 # 光头 Obsidian 教程落地页
 
 > 单文件 HTML 落地页，作为「光头 Obsidian 教程」（飞书 wiki）的入口页。
-> 在线：<https://cklaozhao.me>
+> 在线：<https://guangtou.me>
 
 ## 来龙去脉
 
@@ -35,7 +35,7 @@
 
 ## 部署
 
-整个项目就一个 HTML 入口 + 一份新人手册 HTML，扔到任意静态托管（GitHub Pages / Vercel / Cloudflare Pages 等）即可。当前部署在 <https://cklaozhao.me>。
+整个项目就一个 HTML 入口 + 一份新人手册 HTML，扔到任意静态托管（GitHub Pages / Vercel / Cloudflare Pages 等）即可。当前部署在 <https://guangtou.me>。
 
 ## 协作
 
